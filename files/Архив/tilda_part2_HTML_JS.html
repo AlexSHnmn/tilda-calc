@@ -1,0 +1,809 @@
+<!-- ЧАСТЬ 2: HTML+JS -->
+<!-- LOGO_SIGN_SQUARE_URL → 250х250.jpg -->
+<!-- LOGO_SIGN_LARGE_URL → Frame_18.png -->
+<div id='stm-root'>
+<!-- Floating price sticker -->
+<div class="price-sticker" id="priceSticker">
+  <div class="ps-label">Стоимость единицы</div>
+  <div class="ps-unit" id="psUnit">—<span> ₽</span></div>
+  <div class="ps-sep"></div>
+  <div class="ps-total-row">
+    <div class="ps-total-label">Весь заказ</div>
+    <div class="ps-total-val" id="psTotal">—</div>
+  </div>
+  <div class="ps-name" id="psName"></div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge" id="txt-badge">Калькулятор СТМ</div>
+  <h1 id="txt-hero-h1">Стоимость вашего бренда —<br>за 2 минуты</h1>
+  <p id="txt-hero-p">Выберите продукт, объём и тираж. Система рассчитает полную стоимость производства с разбивкой по каждой статье.</p>
+</div>
+
+<div class="wrap">
+
+  <!-- STEP 1 -->
+  <div class="sec-block">
+    <div class="sec-h" id="txt-s1h">1 · Категория и продукт</div>
+    <div class="sec-s" id="txt-s1s">Выберите категорию, тип продукта и конкретное наименование</div>
+  </div>
+
+  <div class="cat-grid" id="catGrid"></div>
+
+  <!-- Type label + subcategory pills -->
+  <span class="type-label" id="txt-type-label">Тип продукта (вид и назначение)</span>
+  <div class="subpills" id="subpills"></div>
+
+  <div class="sel-wrap">
+    <select id="prodSel" onchange="onProd()">
+      <option value="">— выберите продукт —</option>
+    </select>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="sec-block" style="margin-top:8px">
+    <div class="sec-h" id="txt-s2h">2 · Параметры заказа</div>
+    <div class="sec-s" id="txt-s2s">Укажите объём тары, количество и город доставки</div>
+  </div>
+
+  <div class="notice" id="txt-notice">
+    📌 Минимальный заказ — <strong>от 500 штук</strong>. Минимальная варка — <strong>300 литров</strong>. Чем выше тираж, тем ниже цена единицы.
+  </div>
+
+  <div class="cfg">
+    <div class="fld">
+      <label id="txt-lbl-vol">Объём тары</label>
+      <select id="volSel" onchange="liveCalc()">
+        <option value="0.05">50 мл</option>
+        <option value="0.1">100 мл</option>
+        <option value="0.15">150 мл</option>
+        <option value="0.2">200 мл</option>
+        <option value="0.25">250 мл</option>
+        <option value="0.3" selected>300 мл</option>
+        <option value="0.4">400 мл</option>
+        <option value="0.5">500 мл</option>
+        <option value="0.75">750 мл</option>
+        <option value="1.0">1 000 мл (1 л)</option>
+        <option value="1.5">1 500 мл</option>
+        <option value="2.0">2 000 мл (2 л)</option>
+        <option value="5.0">5 000 мл (5 л)</option>
+      </select>
+    </div>
+    <div class="fld">
+      <label id="txt-lbl-qty">Количество штук</label>
+      <input type="number" id="qtyInp" value="1000" min="500" step="100" oninput="liveCalc()">
+    </div>
+    <div class="fld">
+      <label id="txt-lbl-city">Город доставки</label>
+      <select id="citySel" onchange="liveCalc()">
+        <option value="moscow">Москва / МО</option>
+        <option value="tula">Тула / Орёл</option>
+        <option value="kursk">Курск</option>
+        <option value="mkad">В пределах МКАД</option>
+        <option value="other">Другой город (по запросу)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="tog-sec">
+    <h3 id="txt-tare-h">Тара и укупорка</h3>
+    <div class="hint" id="txt-tare-hint">Кто предоставляет упаковку?</div>
+    <div class="tog-row">
+      <div class="tog on" id="tare-us" onclick="setTare('us')"><div class="dot"></div><span id="txt-tare-us">Закупаем мы (+наценка)</span></div>
+      <div class="tog" id="tare-cl" onclick="setTare('cl')"><div class="dot"></div><span id="txt-tare-cl">Предоставляет клиент</span></div>
+    </div>
+  </div>
+
+  <div class="tog-sec">
+    <h3 id="txt-lbl-h">Способ этикетирования</h3>
+    <div class="hint" id="txt-lbl-hint">Как клеится этикетка?</div>
+    <div class="tog-row">
+      <div class="tog on" id="lbl-auto" onclick="setLbl('auto')"><div class="dot"></div><span id="txt-lbl-auto">Машинная (1 этикетка)</span></div>
+      <div class="tog" id="lbl-m1" onclick="setLbl('m1')"><div class="dot"></div><span id="txt-lbl-m1">Ручная (1 этикетка)</span></div>
+      <div class="tog" id="lbl-m2" onclick="setLbl('m2')"><div class="dot"></div><span id="txt-lbl-m2">Ручная (2 этикетки)</span></div>
+    </div>
+  </div>
+
+  <!-- RESULT (auto-shown) -->
+  <div class="result" id="result">
+    <div class="r-top">
+      <div>
+        <h2 id="rName">—</h2>
+        <div class="meta" id="rMeta"></div>
+      </div>
+      <div class="rprices">
+        <div class="r-unit" id="rUnit">—</div>
+        <div class="r-total" id="rTotal"></div>
+      </div>
+    </div>
+    <div class="r-body">
+      <table class="rt">
+        <thead><tr><th id="txt-col1">Статья расходов</th><th id="txt-col2">₽ / ед.</th></tr></thead>
+        <tbody id="rRows"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Подвал с кнопкой настроек -->
+<div class="page-footer">
+  <button class="settings-trigger" onclick="openAdmin()">
+    <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 1.5a.5.5 0 0 1 .491.405l.193.87a5.5 5.5 0 0 1 1.04.603l.84-.273a.5.5 0 0 1 .595.224l.5.866a.5.5 0 0 1-.1.632l-.683.572a5.5 5.5 0 0 1 0 1.202l.683.572a.5.5 0 0 1 .1.632l-.5.866a.5.5 0 0 1-.595.224l-.84-.273a5.5 5.5 0 0 1-1.04.603l-.193.87A.5.5 0 0 1 8 14.5a.5.5 0 0 1-.491-.405l-.193-.87a5.5 5.5 0 0 1-1.04-.603l-.84.273a.5.5 0 0 1-.595-.224l-.5-.866a.5.5 0 0 1 .1-.632l.683-.572a5.5 5.5 0 0 1 0-1.202l-.683-.572a.5.5 0 0 1-.1-.632l.5-.866a.5.5 0 0 1 .595-.224l.84.273a5.5 5.5 0 0 1 1.04-.603l.193-.87A.5.5 0 0 1 8 1.5z" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>
+    Настройки
+  </button>
+</div>
+
+<!-- ADMIN OVERLAY -->
+<div class="ov" id="aOv">
+<div class="modal" id="aModal">
+
+  <div class="pwd-scr" id="pwdScr">
+    <h2>Настройки</h2>
+    <p>Введите пароль для доступа</p>
+    <input class="pwd-inp" type="password" id="pwdInp" placeholder="Пароль"
+           onkeydown="if(event.key==='Enter')chkPwd()">
+    <button class="pwd-btn" onclick="chkPwd()">Войти →</button>
+    <div class="pwd-err" id="pwdErr">Неверный пароль</div>
+  </div>
+
+  <div id="admCont" style="display:none">
+    <div class="adm-hdr">
+      <h2>⚙ Настройки калькулятора</h2>
+      <button class="adm-close" onclick="closeAdmin()">✕</button>
+    </div>
+    <div class="adm-tabs">
+      <div class="adm-tab active" onclick="admTab('svc')">Тарифы</div>
+      <div class="adm-tab" onclick="admTab('txt')">Тексты</div>
+      <div class="adm-tab" onclick="admTab('cosm')">💆 Косметика</div>
+      <div class="adm-tab" onclick="admTab('kids')">🍼 Дети</div>
+      <div class="adm-tab" onclick="admTab('home')">🕯️ Для дома</div>
+      <div class="adm-tab" onclick="admTab('chem')">🧺 Стирка/Уборка</div>
+      <div class="adm-tab" onclick="admTab('pets')">🐾 Животные</div>
+    </div>
+
+    <!-- SERVICES PANEL -->
+    <div class="adm-panel active" id="ap-svc">
+      <div class="svc-sec">Производство (₽ / единица)</div>
+      <div class="svc-grid">
+        <div class="svc-fld"><label>Фасовка — жидкая</label><input type="number" id="s_liq" step=".1"></div>
+        <div class="svc-fld"><label>Фасовка — кремовая</label><input type="number" id="s_crm" step=".1"></div>
+        <div class="svc-fld"><label>Фасовка — сухая / скраб</label><input type="number" id="s_dry" step=".1"></div>
+        <div class="svc-fld"><label>Маркировка (дата, партия)</label><input type="number" id="s_mark" step=".1"></div>
+      </div>
+      <div class="svc-sec">Этикетирование (₽ / единица)</div>
+      <div class="svc-grid">
+        <div class="svc-fld"><label>Машинная (1 эт.)</label><input type="number" id="s_la" step=".1"></div>
+        <div class="svc-fld"><label>Ручная (1 эт.)</label><input type="number" id="s_lm1" step=".1"></div>
+        <div class="svc-fld"><label>Ручная (2 эт.)</label><input type="number" id="s_lm2" step=".1"></div>
+      </div>
+      <div class="svc-sec">Документы и маркировка ЧЗ (₽ / единица)</div>
+      <div class="svc-grid">
+        <div class="svc-fld"><label>Честный знак — ввод в оборот</label><input type="number" id="s_chz" step=".1"></div>
+        <div class="svc-fld"><label>Декларация соответствия (÷ тираж)</label><input type="number" id="s_decl" step=".1"></div>
+        <div class="svc-fld"><label>GTIN — штрих-код ГС1</label><input type="number" id="s_gtin" step=".1"></div>
+      </div>
+      <div class="svc-sec">Упаковка и отгрузка (₽ / единица)</div>
+      <div class="svc-grid">
+        <div class="svc-fld"><label>Укладка в транспортные короба</label><input type="number" id="s_box" step=".1"></div>
+        <div class="svc-fld"><label>Подбор тарного короба (с коробом)</label><input type="number" id="s_bsel" step=".1"></div>
+        <div class="svc-fld"><label>Паллетирование + целлофан</label><input type="number" id="s_pal" step=".1"></div>
+        <div class="svc-fld"><label>Погрузо-разгрузочные работы</label><input type="number" id="s_load" step=".1"></div>
+      </div>
+      <div class="svc-sec">Доставка (₽ за рейс, до 16 паллет)</div>
+      <div class="svc-grid">
+        <div class="svc-fld"><label>Москва / МО (полный рейс)</label><input type="number" id="s_dmsc"></div>
+        <div class="svc-fld"><label>Тула / Орёл (полный рейс)</label><input type="number" id="s_dtul"></div>
+        <div class="svc-fld"><label>Курск (полный рейс)</label><input type="number" id="s_dkur"></div>
+        <div class="svc-fld"><label>В пределах МКАД (полный рейс)</label><input type="number" id="s_dmkd"></div>
+      </div>
+      <div class="svc-sec">Наценка на тару, если закупаем мы (%)</div>
+      <div class="svc-grid">
+        <div class="svc-fld"><label>Доставка тары до нас (%)</label><input type="number" id="s_tdel" step=".1"></div>
+        <div class="svc-fld"><label>НДС на тару (%)</label><input type="number" id="s_tvat" step=".1"></div>
+        <div class="svc-fld"><label>Прочие расходы (%)</label><input type="number" id="s_toth" step=".1"></div>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveSvc()">💾 Сохранить тарифы</button>
+        <div class="save-ok" id="svc-ok">✓ Сохранено</div>
+      </div>
+    </div>
+
+    <!-- TEXTS PANEL -->
+    <div class="adm-panel" id="ap-txt">
+      <div class="svc-sec">Заголовки и тексты интерфейса</div>
+      <div class="txt-grid">
+        <div class="txt-fld"><label>Бейдж в шапке (hero badge)</label><input type="text" id="te-badge"></div>
+        <div class="txt-fld"><label>Главный заголовок</label><input type="text" id="te-h1"></div>
+        <div class="txt-fld"><label>Подзаголовок hero</label><textarea id="te-p" rows="2"></textarea></div>
+        <div class="txt-fld"><label>Заголовок шага 1</label><input type="text" id="te-s1h"></div>
+        <div class="txt-fld"><label>Подпись шага 1</label><input type="text" id="te-s1s"></div>
+        <div class="txt-fld"><label>Метка типа продукта</label><input type="text" id="te-type"></div>
+        <div class="txt-fld"><label>Заголовок шага 2</label><input type="text" id="te-s2h"></div>
+        <div class="txt-fld"><label>Подпись шага 2</label><input type="text" id="te-s2s"></div>
+        <div class="txt-fld"><label>Текст уведомления (notice)</label><textarea id="te-notice" rows="2"></textarea></div>
+        <div class="txt-fld"><label>Метка «Объём тары»</label><input type="text" id="te-lbl-vol"></div>
+        <div class="txt-fld"><label>Метка «Количество штук»</label><input type="text" id="te-lbl-qty"></div>
+        <div class="txt-fld"><label>Метка «Город доставки»</label><input type="text" id="te-lbl-city"></div>
+        <div class="txt-fld"><label>Заголовок блока «Тара»</label><input type="text" id="te-tare-h"></div>
+        <div class="txt-fld"><label>Подсказка блока «Тара»</label><input type="text" id="te-tare-hint"></div>
+        <div class="txt-fld"><label>Кнопка «Закупаем мы»</label><input type="text" id="te-tare-us"></div>
+        <div class="txt-fld"><label>Кнопка «Предоставляет клиент»</label><input type="text" id="te-tare-cl"></div>
+        <div class="txt-fld"><label>Заголовок блока «Этикетирование»</label><input type="text" id="te-lbl-h"></div>
+        <div class="txt-fld"><label>Подсказка блока «Этикетирование»</label><input type="text" id="te-lbl-hint"></div>
+        <div class="txt-fld"><label>Кнопка «Машинная»</label><input type="text" id="te-lbl-auto"></div>
+        <div class="txt-fld"><label>Кнопка «Ручная 1 эт.»</label><input type="text" id="te-lbl-m1"></div>
+        <div class="txt-fld"><label>Кнопка «Ручная 2 эт.»</label><input type="text" id="te-lbl-m2"></div>
+        <div class="txt-fld"><label>Заголовок колонки «Статья расходов»</label><input type="text" id="te-col1"></div>
+        <div class="txt-fld"><label>Заголовок колонки «₽ / ед.»</label><input type="text" id="te-col2"></div>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveTxts()">💾 Сохранить тексты</button>
+        <div class="save-ok" id="txt-ok">✓ Сохранено</div>
+      </div>
+    </div>
+
+    <!-- PRODUCT PANELS -->
+
+    <div class="adm-panel" id="ap-cosm">
+      <input class="prod-search" placeholder="🔍 Поиск по названию..." oninput="filterProd('cosm',this.value)">
+      <div class="table-wrap"><table class="prod-table" id="pt-cosm">
+        <thead><tr>
+          <th>Продукт</th>
+          <th>от 500 шт</th><th>от 1 000 шт</th><th>от 2 000 шт</th><th>от 5 000 шт</th>
+          <th>Активен</th>
+        </tr></thead>
+        <tbody id="pb-cosm"></tbody>
+      </table></div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveCat('cosm')">💾 Сохранить цены</button>
+        <div class="save-ok" id="cosm-ok">✓ Сохранено</div>
+      </div>
+    </div>
+    <div class="adm-panel" id="ap-kids">
+      <input class="prod-search" placeholder="🔍 Поиск по названию..." oninput="filterProd('kids',this.value)">
+      <div class="table-wrap"><table class="prod-table" id="pt-kids">
+        <thead><tr>
+          <th>Продукт</th>
+          <th>от 500 шт</th><th>от 1 000 шт</th><th>от 2 000 шт</th><th>от 5 000 шт</th>
+          <th>Активен</th>
+        </tr></thead>
+        <tbody id="pb-kids"></tbody>
+      </table></div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveCat('kids')">💾 Сохранить цены</button>
+        <div class="save-ok" id="kids-ok">✓ Сохранено</div>
+      </div>
+    </div>
+    <div class="adm-panel" id="ap-home">
+      <input class="prod-search" placeholder="🔍 Поиск по названию..." oninput="filterProd('home',this.value)">
+      <div class="table-wrap"><table class="prod-table" id="pt-home">
+        <thead><tr>
+          <th>Продукт</th>
+          <th>от 500 шт</th><th>от 1 000 шт</th><th>от 2 000 шт</th><th>от 5 000 шт</th>
+          <th>Активен</th>
+        </tr></thead>
+        <tbody id="pb-home"></tbody>
+      </table></div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveCat('home')">💾 Сохранить цены</button>
+        <div class="save-ok" id="home-ok">✓ Сохранено</div>
+      </div>
+    </div>
+    <div class="adm-panel" id="ap-chem">
+      <input class="prod-search" placeholder="🔍 Поиск по названию..." oninput="filterProd('chem',this.value)">
+      <div class="table-wrap"><table class="prod-table" id="pt-chem">
+        <thead><tr>
+          <th>Продукт</th>
+          <th>от 500 шт</th><th>от 1 000 шт</th><th>от 2 000 шт</th><th>от 5 000 шт</th>
+          <th>Активен</th>
+        </tr></thead>
+        <tbody id="pb-chem"></tbody>
+      </table></div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveCat('chem')">💾 Сохранить цены</button>
+        <div class="save-ok" id="chem-ok">✓ Сохранено</div>
+      </div>
+    </div>
+    <div class="adm-panel" id="ap-pets">
+      <input class="prod-search" placeholder="🔍 Поиск по названию..." oninput="filterProd('pets',this.value)">
+      <div class="table-wrap"><table class="prod-table" id="pt-pets">
+        <thead><tr>
+          <th>Продукт</th>
+          <th>от 500 шт</th><th>от 1 000 шт</th><th>от 2 000 шт</th><th>от 5 000 шт</th>
+          <th>Активен</th>
+        </tr></thead>
+        <tbody id="pb-pets"></tbody>
+      </table></div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveCat('pets')">💾 Сохранить цены</button>
+        <div class="save-ok" id="pets-ok">✓ Сохранено</div>
+      </div>
+    </div>
+  </div><!-- /admCont -->
+</div><!-- /modal -->
+</div><!-- /ov -->
+
+<script>
+const ADMIN_PWD = 'VDMK26';
+
+// ═══ SERVICE DEFAULTS ═══
+const SVC_DEF = {
+  liq:5.2,crm:8.2,dry:11.5,mark:0.9,
+  la:1.2,lm1:3.0,lm2:5.0,
+  chz:5.8,decl:29.0,gtin:10.0,
+  box:3.0,bsel:3.5,pal:0.95,load:1.19,
+  dmsc:40000,dtul:18000,dkur:18000,dmkd:26500,
+  tdel:15,tvat:5,toth:6
+};
+function getSvc(){try{return{...SVC_DEF,...JSON.parse(localStorage.getItem('stm_svc')||'{}')};}catch(e){return{...SVC_DEF};}}
+
+// ═══ TEXT DEFAULTS ═══
+const TXT_DEF = {
+  badge:'Калькулятор СТМ',
+  h1:'Стоимость вашего бренда —<br>за 2 минуты',
+  p:'Выберите продукт, объём и тираж. Система рассчитает полную стоимость производства с разбивкой по каждой статье.',
+  s1h:'1 · Категория и продукт',s1s:'Выберите категорию, тип продукта и конкретное наименование',
+  type:'Тип продукта (вид и назначение)',
+  s2h:'2 · Параметры заказа',s2s:'Укажите объём тары, количество и город доставки',
+  notice:'📌 Минимальный заказ — <strong>от 500 штук</strong>. Минимальная варка — <strong>300 литров</strong>. Чем выше тираж, тем ниже цена единицы.',
+  'lbl-vol':'Объём тары','lbl-qty':'Количество штук','lbl-city':'Город доставки',
+  'tare-h':'Тара и укупорка','tare-hint':'Кто предоставляет упаковку?',
+  'tare-us':'Закупаем мы (+наценка)','tare-cl':'Предоставляет клиент',
+  'lbl-h':'Способ этикетирования','lbl-hint':'Как клеится этикетка?',
+  'lbl-auto':'Машинная (1 этикетка)','lbl-m1':'Ручная (1 этикетка)','lbl-m2':'Ручная (2 этикетки)',
+  col1:'Статья расходов',col2:'₽ / ед.'
+};
+function getTxts(){try{return{...TXT_DEF,...JSON.parse(localStorage.getItem('stm_txt')||'{}')};}catch(e){return{...TXT_DEF};}}
+function applyTxts(){
+  const t=getTxts();
+  const map={
+    'txt-badge':'badge','txt-hero-h1':'h1','txt-hero-p':'p',
+    'txt-s1h':'s1h','txt-s1s':'s1s','txt-type-label':'type',
+    'txt-s2h':'s2h','txt-s2s':'s2s','txt-notice':'notice',
+    'txt-lbl-vol':'lbl-vol','txt-lbl-qty':'lbl-qty','txt-lbl-city':'lbl-city',
+    'txt-tare-h':'tare-h','txt-tare-hint':'tare-hint',
+    'txt-tare-us':'tare-us','txt-tare-cl':'tare-cl',
+    'txt-lbl-h':'lbl-h','txt-lbl-hint':'lbl-hint',
+    'txt-lbl-auto':'lbl-auto','txt-lbl-m1':'lbl-m1','txt-lbl-m2':'lbl-m2',
+    'txt-col1':'col1','txt-col2':'col2'
+  };
+  Object.entries(map).forEach(([id,key])=>{
+    const el=document.getElementById(id);
+    if(el&&t[key]!==undefined) el.innerHTML=t[key];
+  });
+}
+
+// ═══ CATALOG ═══
+// Cosmetics: p = price per LITRE (multiply by volume)
+// Others: p = price per UNIT directly (direct:true)
+const CATALOG_DEF = {
+  cosm:[
+    {sub:'Волосы',n:'Бальзам (премиум)',p:[625,562.5,506.25,387.28],cons:'liq'},
+    {sub:'Волосы',n:'Бальзам (стандарт)',p:[323,290.7,261.63,200.15],cons:'liq'},
+    {sub:'Волосы',n:'Бальзам (эконом)',p:[150,135,121.5,92.95],cons:'liq'},
+    {sub:'Волосы',n:'Бальзам для кудрявых волос (КГМ)',p:[598,538.2,484.38,370.55],cons:'liq'},
+    {sub:'Волосы',n:'Leave-in крем-спрей 15-в-1',p:[350,315,283.5,216.88],cons:'liq'},
+    {sub:'Волосы',n:'Спрей для объёма волос',p:[160,144,129.6,99.14],cons:'liq'},
+    {sub:'Волосы',n:'Спрей-кондиционер 15-в-1',p:[298,268.2,241.38,184.66],cons:'liq'},
+    {sub:'Волосы',n:'Маска для волос увлажняющая',p:[640,576,518.4,396.58],cons:'crm'},
+    {sub:'Волосы',n:'Маска для волос (КГМ)',p:[559,503.1,452.79,346.38],cons:'crm'},
+    {sub:'Волосы',n:'Масло для волос-спрей (премиум)',p:[1976,1778.4,1600.56,1224.43],cons:'liq'},
+    {sub:'Волосы',n:'Масло для волос-спрей (стандарт)',p:[1885,1696.5,1526.85,1168.04],cons:'liq'},
+    {sub:'Волосы',n:'Пилинг для кожи головы',p:[460,414,372.6,285.04],cons:'crm'},
+    {sub:'Волосы',n:'Сыворотка для кончиков волос',p:[1920,1728,1555.2,1189.73],cons:'liq'},
+    {sub:'Волосы',n:'Шампунь (эконом)',p:[142,127.8,115.02,87.99],cons:'liq'},
+    {sub:'Волосы',n:'Шампунь бессульфатный',p:[386,347.4,312.66,239.18],cons:'liq'},
+    {sub:'Волосы',n:'Шампунь (стандарт)',p:[275,247.5,222.75,170.40],cons:'liq'},
+    {sub:'Волосы',n:'Шампунь с кератином, окрашенные (прем.)',p:[440,396,356.4,272.65],cons:'liq'},
+    {sub:'Волосы',n:'Шампунь с кератином, восстановление',p:[430,387,348.3,266.45],cons:'liq'},
+    {sub:'Волосы',n:'Шампунь для кудрявых волос (КГМ)',p:[330,297,267.3,204.48],cons:'liq'},
+    {sub:'Тело',n:'Гель для душа (премиум)',p:[440,396,356.4,272.65],cons:'liq'},
+    {sub:'Тело',n:'Гель для душа (стандарт)',p:[285,256.5,230.85,176.60],cons:'liq'},
+    {sub:'Тело',n:'Гель для душа (эконом)',p:[65,58.5,52.65,40.28],cons:'liq'},
+    {sub:'Тело',n:'Гель для интимной гигиены',p:[315,283.5,255.15,195.19],cons:'liq'},
+    {sub:'Тело',n:'Дезодорант шариковый на квасцах',p:[206,185.4,166.86,127.65],cons:'liq'},
+    {sub:'Тело',n:'Жидкое мыло с вулканической пудрой',p:[787,708.3,637.47,487.66],cons:'liq'},
+    {sub:'Тело',n:'Жидкое мыло (стандарт)',p:[245,220.5,198.45,151.81],cons:'liq'},
+    {sub:'Тело',n:'Жидкое мыло (эконом)',p:[78,70.2,63.18,48.33],cons:'liq'},
+    {sub:'Тело',n:'Лосьон для тела (премиум)',p:[378,340.2,306.18,234.23],cons:'crm'},
+    {sub:'Тело',n:'Лосьон для тела (эконом)',p:[190,171,153.9,117.73],cons:'crm'},
+    {sub:'Тело',n:'Мягкое мыло для бани',p:[380,342,307.8,235.47],cons:'liq'},
+    {sub:'Тело',n:'Скраб сахарный',p:[595,535.5,481.95,368.69],cons:'dry'},
+    {sub:'Тело',n:'Скраб солевой',p:[485,436.5,392.85,300.53],cons:'dry'},
+    {sub:'Лицо',n:'Гель-патчи (стандарт)',p:[265,238.5,214.65,164.21],cons:'crm'},
+    {sub:'Лицо',n:'Гель-патчи (премиум)',p:[510,459,413.1,334.61],cons:'crm'},
+    {sub:'Лицо',n:'Гидрофильное масло (премиум)',p:[2630,2367,2130.3,1725.54],cons:'liq'},
+    {sub:'Лицо',n:'Гидрофильное масло (стандарт)',p:[425,382.5,344.25,263.35],cons:'liq'},
+    {sub:'Лицо',n:'Гидрофильное масло (эконом)',p:[285,256.5,230.85,186.99],cons:'liq'},
+    {sub:'Лицо',n:'Крем увлажняющий (с ГК)',p:[600,540,486,393.66],cons:'crm'},
+    {sub:'Лицо',n:'Крем против отёков',p:[752,676.8,609.12,465.98],cons:'crm'},
+    {sub:'Лицо',n:'Крем питательный (масло ши)',p:[766,689.4,620.46,502.57],cons:'crm'},
+    {sub:'Лицо',n:'Маска увлажняющая',p:[930,837,753.3,610.17],cons:'crm'},
+    {sub:'Лицо',n:'Маска против прыщей',p:[427,384.3,345.87,264.59],cons:'crm'},
+    {sub:'Лицо',n:'Массажное масло для лица',p:[3045,2740.5,2466.45,1997.82],cons:'liq'},
+    {sub:'Лицо',n:'Мист увлажняющий',p:[260,234,210.6,170.59],cons:'liq'},
+    {sub:'Лицо',n:'Мицеллярная вода',p:[230,207,186.3,142.52],cons:'liq'},
+    {sub:'Лицо',n:'Мицеллярный мусс',p:[725,652.5,587.25,475.67],cons:'crm'},
+    {sub:'Лицо',n:'Пенка для умывания увлажняющая',p:[490,441,396.9,303.63],cons:'liq'},
+    {sub:'Лицо',n:'Пенка для умывания с аминокислотами',p:[460,414,372.6,301.81],cons:'liq'},
+    {sub:'Лицо',n:'Тонер (премиум)',p:[438,394.2,354.78,271.41],cons:'liq'},
+    {sub:'Лицо',n:'Тонер (стандарт)',p:[260,234,210.6,170.59],cons:'liq'},
+    {sub:'Лицо',n:'Тонер (эконом)',p:[215,193.5,174.15,141.06],cons:'liq'},
+    {sub:'Лицо',n:'Тоник омолаживающий с розовой водой',p:[190,171,153.9,117.73],cons:'liq'},
+    {sub:'Лицо',n:'Тоник очищающий с кислотами',p:[180,162,145.8,118.10],cons:'liq'},
+    {sub:'Лицо',n:'Тоник увлажняющий с ГК',p:[206,185.4,166.86,127.65],cons:'liq'},
+    {sub:'Лицо',n:'Энзимная пудра (премиум)',p:[1681,1512.9,1361.61,1102.90],cons:'dry'},
+    {sub:'Лицо',n:'Энзимная пудра (стандарт)',p:[1062,955.8,860.22,696.78],cons:'dry'},
+    {sub:'Лицо',n:'Энзимная пудра (эконом)',p:[866,779.4,701.46,536.62],cons:'dry'},
+  ],
+  // ДЕТИ — прямые цены за единицу
+  kids:[
+    {sub:'Уход 0+',n:'Крем детский под подгузник',p:[1700,1530,1377,1053.4],cons:'crm',direct:true},
+    {sub:'Уход 0+',n:'Масло массажное детское',p:[2930,2637,2373.3,1815.57],cons:'crm',direct:true},
+    {sub:'Мытьё 0+',n:'Мягкий гель для купания',p:[490,441,396.9,303.63],cons:'liq',direct:true},
+    {sub:'Мытьё 0+',n:'Гель-шампунь для детей',p:[650,585,526.5,402.77],cons:'liq',direct:true},
+    {sub:'Мытьё 0+',n:'Шампунь детский без слёз',p:[455,409.5,368.55,281.94],cons:'liq',direct:true},
+    {sub:'Мытьё 3+',n:'Шампунь детский 3+ без слёз (эконом)',p:[225,202.5,182.25,139.42],cons:'liq',direct:true},
+  ],
+  // ДОМ — прямые цены за единицу
+  home:[
+    {sub:'Ароматы',n:'Жидкость для диффузора (премиум)',p:[5620,5058,4552.2,3482.43],cons:'liq',direct:true},
+    {sub:'Ароматы',n:'Жидкость для диффузора (стандарт)',p:[2810,2529,2276.1,1741.22],cons:'liq',direct:true},
+    {sub:'Ароматы',n:'Жидкость для диффузора (эконом)',p:[1390,1251,1125.9,861.31],cons:'liq',direct:true},
+    {sub:'Ароматы',n:'Спрей-ароматизатор (эконом)',p:[90,81,72.9,55.77],cons:'liq',direct:true},
+    {sub:'Ароматы',n:'Спрей-ароматизатор (стандарт)',p:[103,92.7,83.43,63.82],cons:'liq',direct:true},
+    {sub:'Ароматы',n:'Спрей-ароматизатор (премиум)',p:[125,112.5,101.25,77.46],cons:'liq',direct:true},
+  ],
+  // СТИРКА + УБОРКА — прямые цены за единицу
+  chem:[
+    {sub:'Стирка',n:'Гель для стирки (эконом)',p:[78,70.2,63.18,48.33],cons:'liq',direct:true},
+    {sub:'Стирка',n:'Гель для стирки (стандарт)',p:[135,121.5,109.35,83.65],cons:'liq',direct:true},
+    {sub:'Стирка',n:'Гель для стирки белого белья (премиум)',p:[286,257.4,231.66,177.22],cons:'liq',direct:true},
+    {sub:'Стирка',n:'Гель для стирки цветного белья (премиум)',p:[310,279,251.1,192.09],cons:'liq',direct:true},
+    {sub:'Стирка',n:'Гель для стирки чёрного белья (премиум)',p:[299,269.1,242.19,185.28],cons:'liq',direct:true},
+    {sub:'Стирка',n:'Кондиционер для белья (премиум)',p:[213,191.7,172.53,131.99],cons:'liq',direct:true},
+    {sub:'Стирка',n:'Кондиционер для белья (эконом)',p:[62,55.8,50.22,38.42],cons:'liq',direct:true},
+    {sub:'Стирка',n:'Пятновыводитель',p:[100,90,81,61.97],cons:'liq',direct:true},
+    {sub:'Стирка',n:'Кислородный пятновыводитель',p:[299,269.1,242.19,185.28],cons:'dry',direct:true},
+    {sub:'Стирка',n:'Спрей «жидкий утюг» (эконом)',p:[117,105.3,94.77,72.5],cons:'liq',direct:true},
+    {sub:'Стирка',n:'Спрей «жидкий утюг» (стандарт)',p:[128,115.2,103.68,79.32],cons:'liq',direct:true},
+    {sub:'Стирка',n:'Спрей «жидкий утюг» (премиум)',p:[141,126.9,114.21,87.37],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Антижир (премиум)',p:[170,153,137.7,105.34],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Антижир (эконом)',p:[62,55.8,50.22,38.42],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Антиналёт (премиум)',p:[266,239.4,215.46,164.83],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Антиналёт (стандарт)',p:[162,145.8,131.22,100.38],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Гель для мытья посуды (премиум)',p:[179,161.1,144.99,110.92],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Гель для мытья посуды (стандарт)',p:[122.5,110.25,99.23,75.91],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Гель для мытья посуды (эконом)',p:[53,47.7,42.93,32.84],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Концентрат для удаления накипи',p:[97,87.3,78.57,60.11],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Средство для мытья пола (премиум)',p:[63,56.7,51.03,39.04],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Средство для мытья пола (эконом)',p:[29,26.1,23.49,17.97],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Средство для мытья стёкол',p:[55,49.5,44.55,34.08],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Универсальное чистящее средство',p:[85,76.5,68.85,52.67],cons:'liq',direct:true},
+    {sub:'Уборка',n:'Антисептический гель',p:[810,729,656.1,501.92],cons:'liq',direct:true},
+  ],
+  // ЖИВОТНЫЕ — прямые цены за единицу
+  pets:[
+    {sub:'Уход',n:'Кондиционер от колтунов',p:[293.4,264.06,237.65,181.81],cons:'liq',direct:true},
+    {sub:'Уход',n:'Спрей-кондиционер',p:[162.6,146.34,131.71,100.76],cons:'liq',direct:true},
+    {sub:'Уход',n:'Спрей-кондиционер безводный',p:[1404.4,1263.96,1137.56,870.24],cons:'liq',direct:true},
+    {sub:'Уход',n:'Спрей-кондиционер двухфазный',p:[612.06,550.85,495.77,379.26],cons:'liq',direct:true},
+    {sub:'Уход',n:'Спрей нейтрализатор запаха',p:[157.7,141.93,127.74,97.72],cons:'liq',direct:true},
+    {sub:'Уход',n:'Пенка для лап с пантенолом',p:[184.31,165.88,149.29,114.21],cons:'liq',direct:true},
+    {sub:'Чистота',n:'Гель для стирки вещей для животных',p:[322.27,290.04,261.04,199.69],cons:'liq',direct:true},
+    {sub:'Чистота',n:'Средство для уборки с нейтрализатором запаха',p:[163.25,146.93,132.23,101.16],cons:'liq',direct:true},
+  ]
+};
+
+const CAT_META = {
+  cosm:{icon:'🌿',name:'Косметика'},
+  kids:{icon:'🍼',name:'Для детей'},
+  home:{icon:'🕯️',name:'Для дома'},
+  chem:{icon:'🧺',name:'Бытхимия'},
+  pets:{icon:'🐾',name:'Для животных'},
+};
+
+// ═══ STATE ═══
+let curGrp='cosm',curSub='',curProd=null,tare='us',lbl='auto';
+
+// ═══ STORAGE ═══
+function getCatalog(){
+  const cat=JSON.parse(JSON.stringify(CATALOG_DEF));
+  try{
+    const saved=JSON.parse(localStorage.getItem('stm_cat')||'{}');
+    Object.keys(cat).forEach(grp=>{
+      if(saved[grp]) cat[grp].forEach((prod,i)=>{
+        if(saved[grp][i]){
+          prod.p=saved[grp][i].p||prod.p;
+          if(saved[grp][i].hidden!==undefined) prod.hidden=saved[grp][i].hidden;
+        }
+      });
+    });
+  }catch(e){}
+  return cat;
+}
+
+// ═══ RENDER MAIN UI ═══
+function renderCats(){
+  const cat=getCatalog();
+  document.getElementById('catGrid').innerHTML=Object.keys(CAT_META).map(grp=>{
+    const m=CAT_META[grp];
+    const cnt=cat[grp].filter(p=>!p.hidden).length;
+    return `<div class="cat-card${grp===curGrp?' active':''}" id="cc-${grp}" onclick="pickGrp('${grp}')">
+      <span class="ic">${m.icon}</span>
+      <div class="nm">${m.name}</div>
+      <div class="ct">${cnt} продуктов</div>
+    </div>`;
+  }).join('');
+  renderSubs();
+}
+function pickGrp(grp){
+  curGrp=grp;curSub='';curProd=null;
+  document.querySelectorAll('.cat-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('cc-'+grp).classList.add('active');
+  renderSubs();
+  liveCalc();
+}
+function renderSubs(){
+  const cat=getCatalog();
+  const subs=[...new Set(cat[curGrp].filter(p=>!p.hidden).map(p=>p.sub))];
+  curSub=subs[0]||'';
+  document.getElementById('subpills').innerHTML=subs.map(s=>
+    `<div class="subpill${s===curSub?' active':''}" onclick="pickSub('${s}')">${s}</div>`
+  ).join('');
+  renderProds();
+}
+function pickSub(s){
+  curSub=s;
+  document.querySelectorAll('.subpill').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  renderProds();
+}
+function renderProds(){
+  const cat=getCatalog();
+  const prods=cat[curGrp].filter(p=>!p.hidden&&p.sub===curSub);
+  const sel=document.getElementById('prodSel');
+  sel.innerHTML='<option value="">— выберите продукт —</option>'+
+    prods.map(p=>{
+      const idx=cat[curGrp].indexOf(p);
+      return `<option value="${idx}">${p.n}</option>`;
+    }).join('');
+  curProd=null;
+  liveCalc();
+}
+function onProd(){
+  const v=document.getElementById('prodSel').value;
+  if(v===''){curProd=null;liveCalc();return;}
+  curProd=getCatalog()[curGrp][+v];
+  liveCalc();
+}
+function setTare(v){
+  tare=v;
+  ['us','cl'].forEach(x=>document.getElementById('tare-'+x).classList.toggle('on',x===v));
+  liveCalc();
+}
+function setLbl(v){
+  lbl=v;
+  ['auto','m1','m2'].forEach(x=>document.getElementById('lbl-'+x).classList.toggle('on',x===v));
+  liveCalc();
+}
+
+// ═══ CALCULATION ═══
+function prodPrice(qty){
+  if(!curProd) return 0;
+  const[a,b,c,d]=curProd.p;
+  return qty>=5000?d:qty>=2000?c:qty>=1000?b:a;
+}
+function consistency(){
+  return curProd?curProd.cons||'liq':'liq';
+}
+// FIX: delivery = flat rate for whole truck / qty
+function delivPU(city,qty,vol){
+  const s=getSvc();
+  const rates={moscow:s.dmsc,tula:s.dtul,kursk:s.dkur,mkad:s.dmkd,other:0};
+  const rate=rates[city]||0;
+  if(!rate) return 0;
+  // units per pallet based on volume
+  const upp=Math.max(40,Math.round(500/Math.max(vol,0.1)));
+  const pals=Math.max(1,Math.ceil(qty/upp));
+  const trucks=Math.ceil(pals/16);
+  return (trucks*rate)/qty;
+}
+
+function liveCalc(){
+  if(!curProd){
+    // hide sticker and result
+    document.getElementById('priceSticker').classList.remove('show');
+    document.getElementById('result').classList.remove('show');
+    return;
+  }
+  const qty=Math.max(500,parseInt(document.getElementById('qtyInp').value)||1000);
+  const vol=parseFloat(document.getElementById('volSel').value)||0.3;
+  const city=document.getElementById('citySel').value;
+  const s=getSvc();
+  const isDirect=!!curProd.direct;
+
+  // Product cost
+  const rawPrice=prodPrice(qty);
+  const prodCost=isDirect?rawPrice:rawPrice*vol;
+
+  const cons=consistency();
+  const packCost=cons==='crm'?s.crm:cons==='dry'?s.dry:s.liq;
+
+  let tareCost=0;
+  if(tare==='us'&&!isDirect){
+    const base=12+vol*45;
+    tareCost=base*(1+(s.tdel+s.tvat+s.toth)/100);
+  }
+  const lblCost=lbl==='auto'?s.la:lbl==='m1'?s.lm1:s.lm2;
+  const delPU=delivPU(city,qty,vol);
+
+  const rows=[
+    {nm:'Продукт (рецептура + сырьё)',
+     nt:`${curProd.n}${isDirect?` · ${qty.toLocaleString('ru')} шт.`:` · ${vol*1000} мл · ${qty.toLocaleString('ru')} шт.`}`,
+     val:prodCost},
+    {nm:'Фасовка и укупорка',
+     nt:`Тип: ${cons==='crm'?'кремовая':cons==='dry'?'сухая':'жидкая'}`,val:packCost},
+    {nm:tare==='us'&&!isDirect?'Тара (флакон + крышка) — закупаем мы':'Тара',
+     nt:tare==='us'&&!isDirect?`+${s.tdel+s.tvat+s.toth}% накладных`:'Не входит в расчёт (прямая цена продукта)',
+     val:tareCost,zero:tareCost===0},
+    {nm:'Этикетирование',
+     nt:lbl==='auto'?'Машинная (1 эт.)':lbl==='m1'?'Ручная (1 эт.)':'Ручная (2 эт.)',val:lblCost},
+    {nm:'Маркировка (дата, номер партии)',nt:'Нанесение на каждую единицу',val:s.mark},
+    {nm:'Честный знак — ввод в оборот',nt:'Через аккаунт производителя',val:s.chz},
+    {nm:'Декларация соответствия',nt:`На 5 лет ÷ ${qty.toLocaleString('ru')} шт.`,val:qty>=1000?s.decl:58},
+    {nm:'GTIN — штрих-код ГС1',nt:'С публикацией в Нац. каталоге ЧЗ',val:qty>=1000?s.gtin:20},
+    {nm:'Укладка в транспортные короба',nt:'Включает стоимость тарного короба',val:s.box+s.bsel},
+    {nm:'Паллетирование + целлофанирование',nt:`${Math.max(1,Math.ceil(qty/Math.max(40,Math.round(500/Math.max(vol,0.1)))))} пал.`,val:s.pal},
+    {nm:'Погрузо-разгрузочные работы',nt:'Отгрузка с производства',val:s.load},
+    {nm:city==='other'?'Доставка — по запросу':'Доставка',
+     nt:city==='other'?'Рассчитывается индивидуально':
+        `${({moscow:'Москва / МО',tula:'Тула / Орёл',kursk:'Курск',mkad:'В пределах МКАД'}[city])||''} · стоимость рейса ÷ ${qty.toLocaleString('ru')} шт.`,
+     val:city==='other'?0:delPU,zero:city==='other'},
+  ];
+
+  const unit=rows.filter(r=>!r.zero).reduce((s,r)=>s+r.val,0);
+  const grand=unit*qty;
+
+  // Update result table
+  document.getElementById('rName').textContent=curProd.n;
+  document.getElementById('rMeta').textContent=`${CAT_META[curGrp].name} · ${curSub}${isDirect?'':' · '+vol*1000+' мл'} · ${qty.toLocaleString('ru')} шт.`;
+  document.getElementById('rUnit').textContent=unit.toFixed(2)+' ₽';
+  document.getElementById('rTotal').textContent=`Итого за весь заказ: ${grand.toLocaleString('ru',{maximumFractionDigits:0})} ₽`;
+
+  const tbody=document.getElementById('rRows');
+  const t=getTxts();
+  tbody.innerHTML=rows.map(r=>`
+    <tr class="${r.zero?'zero-row':''}">
+      <td>${r.nm}<span class="rn">${r.nt||''}</span></td>
+      <td>${r.zero?'—':r.val.toFixed(2)+' ₽'}</td>
+    </tr>`).join('')+
+    `<tr class="total-row"><td><strong>${t.col1||'Стоимость единицы'}</strong></td><td><strong>${unit.toFixed(2)} ₽</strong></td></tr>
+     <tr class="grand-row"><td><strong>Итого за заказ (${qty.toLocaleString('ru')} шт.)</strong></td><td><strong>${grand.toLocaleString('ru',{maximumFractionDigits:0})} ₽</strong></td></tr>`;
+
+  document.getElementById('result').classList.add('show');
+
+  // Update sticker
+  const sticker=document.getElementById('priceSticker');
+  // Форматирование с пробелами между разрядами
+  const fmtUnit = unit.toLocaleString('ru',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtGrand = grand.toLocaleString('ru',{maximumFractionDigits:0});
+  document.getElementById('psName').textContent=curProd.n;
+  document.getElementById('psUnit').innerHTML=fmtUnit+'<span> ₽</span>';
+  document.getElementById('psTotal').textContent=fmtGrand+' ₽';
+  sticker.classList.add('show');
+}
+
+// ═══ ADMIN ═══
+function openAdmin(){
+  document.getElementById('aOv').classList.add('open');
+  document.getElementById('pwdScr').style.display='block';
+  document.getElementById('admCont').style.display='none';
+  document.getElementById('pwdInp').value='';
+  document.getElementById('pwdErr').style.display='none';
+}
+function chkPwd(){
+  if(document.getElementById('pwdInp').value===ADMIN_PWD){
+    document.getElementById('pwdScr').style.display='none';
+    document.getElementById('admCont').style.display='block';
+    loadSvc();loadTxtFields();loadAllProdTables();
+  }else{
+    document.getElementById('pwdErr').style.display='block';
+  }
+}
+function closeAdmin(){document.getElementById('aOv').classList.remove('open');}
+document.getElementById('aOv').addEventListener('click',function(e){if(e.target===this)closeAdmin();});
+function admTab(t){
+  const tabs=['svc','txt','cosm','kids','home','chem','pets'];
+  document.querySelectorAll('.adm-tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===t));
+  document.querySelectorAll('.adm-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('ap-'+t).classList.add('active');
+}
+
+// Services
+const SVC_MAP={liq:'s_liq',crm:'s_crm',dry:'s_dry',mark:'s_mark',la:'s_la',lm1:'s_lm1',lm2:'s_lm2',
+  chz:'s_chz',decl:'s_decl',gtin:'s_gtin',box:'s_box',bsel:'s_bsel',pal:'s_pal',load:'s_load',
+  dmsc:'s_dmsc',dtul:'s_dtul',dkur:'s_dkur',dmkd:'s_dmkd',tdel:'s_tdel',tvat:'s_tvat',toth:'s_toth'};
+function loadSvc(){const s=getSvc();Object.entries(SVC_MAP).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.value=s[k];});}
+function saveSvc(){
+  const saved={};
+  Object.entries(SVC_MAP).forEach(([k,id])=>{const el=document.getElementById(id);if(el)saved[k]=parseFloat(el.value)||0;});
+  localStorage.setItem('stm_svc',JSON.stringify(saved));
+  flash('svc-ok');liveCalc();
+}
+
+// Texts
+const TXT_MAP={
+  badge:'te-badge',h1:'te-h1',p:'te-p',
+  s1h:'te-s1h',s1s:'te-s1s',type:'te-type',
+  s2h:'te-s2h',s2s:'te-s2s',notice:'te-notice',
+  'lbl-vol':'te-lbl-vol','lbl-qty':'te-lbl-qty','lbl-city':'te-lbl-city',
+  'tare-h':'te-tare-h','tare-hint':'te-tare-hint',
+  'tare-us':'te-tare-us','tare-cl':'te-tare-cl',
+  'lbl-h':'te-lbl-h','lbl-hint':'te-lbl-hint',
+  'lbl-auto':'te-lbl-auto','lbl-m1':'te-lbl-m1','lbl-m2':'te-lbl-m2',
+  col1:'te-col1',col2:'te-col2'
+};
+function loadTxtFields(){
+  const t=getTxts();
+  Object.entries(TXT_MAP).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.value=t[k]||'';});
+}
+function saveTxts(){
+  const saved={};
+  Object.entries(TXT_MAP).forEach(([k,id])=>{const el=document.getElementById(id);if(el)saved[k]=el.value;});
+  localStorage.setItem('stm_txt',JSON.stringify(saved));
+  applyTxts();flash('txt-ok');
+}
+
+// Product tables
+function loadAllProdTables(){['cosm','kids','home','chem','pets'].forEach(g=>loadProdTable(g));}
+function loadProdTable(grp){
+  const cat=getCatalog();
+  document.getElementById('pb-'+grp).innerHTML=cat[grp].map((prod,i)=>`
+    <tr id="ptr-${grp}-${i}" class="${prod.hidden?'hidden-prod':''}">
+      <td>
+        <div class="prod-name">${prod.n}</div>
+        <small style="color:#bbb">${prod.sub}${prod.direct?' · прямая цена/ед':' · ₽/л'}</small>
+      </td>
+      <td><input class="price-inp" type="number" step="0.01" id="pr-${grp}-${i}-0" value="${prod.p[0]}"></td>
+      <td><input class="price-inp" type="number" step="0.01" id="pr-${grp}-${i}-1" value="${prod.p[1]}"></td>
+      <td><input class="price-inp" type="number" step="0.01" id="pr-${grp}-${i}-2" value="${prod.p[2]}"></td>
+      <td><input class="price-inp" type="number" step="0.01" id="pr-${grp}-${i}-3" value="${prod.p[3]}"></td>
+      <td><label class="sw"><input type="checkbox" id="ph-${grp}-${i}" ${prod.hidden?'':'checked'} onchange="toggleProd('${grp}',${i})"><span class="sw-slider"></span></label></td>
+    </tr>`).join('');
+}
+function toggleProd(grp,i){
+  const checked=document.getElementById('ph-'+grp+'-'+i).checked;
+  document.getElementById('ptr-'+grp+'-'+i).classList.toggle('hidden-prod',!checked);
+}
+function saveCat(grp){
+  const cat=getCatalog();
+  const saved=JSON.parse(localStorage.getItem('stm_cat')||'{}');
+  if(!saved[grp])saved[grp]={};
+  cat[grp].forEach((prod,i)=>{
+    const p=[0,1,2,3].map(j=>{const el=document.getElementById('pr-'+grp+'-'+i+'-'+j);return el?parseFloat(el.value)||prod.p[j]:prod.p[j];});
+    const hel=document.getElementById('ph-'+grp+'-'+i);
+    saved[grp][i]={p,hidden:hel?!hel.checked:false};
+  });
+  localStorage.setItem('stm_cat',JSON.stringify(saved));
+  flash(grp+'-ok');renderCats();
+}
+function filterProd(grp,q){
+  const lq=q.toLowerCase();
+  document.querySelectorAll(`#pb-${grp} tr`).forEach(row=>{
+    const nm=row.querySelector('.prod-name');
+    if(!nm)return;
+    row.style.display=nm.textContent.toLowerCase().includes(lq)?'':'none';
+  });
+}
+function flash(id){
+  const el=document.getElementById(id);if(!el)return;
+  el.style.display='block';setTimeout(()=>el.style.display='none',3000);
+}
+
+// INIT
+applyTxts();
+renderCats();
+</script>
+</div>
