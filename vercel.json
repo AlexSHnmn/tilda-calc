@@ -1,5 +1,9 @@
 {
   "buildCommand": "exit 0",
   "installCommand": "exit 0",
-  "public": true
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs20.x"
+    }
+  }
 }
