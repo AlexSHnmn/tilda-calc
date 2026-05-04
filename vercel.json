@@ -1,25 +1,4 @@
 {
   "buildCommand": "exit 0",
-  "installCommand": "exit 0",
-  "env": [
-    {
-      "key": "GITHUB_TOKEN",
-      "description": "GitHub Personal Access Token с правами Contents: Read and write"
-    },
-    {
-      "key": "GITHUB_REPO",
-      "default": "AlexSHnmn/tilda-calc",
-      "description": "GitHub репозиторий (owner/repo)"
-    },
-    {
-      "key": "GITHUB_FILE",
-      "default": "calculator-unified.html",
-      "description": "Путь к файлу калькулятора"
-    },
-    {
-      "key": "GITHUB_BRANCH",
-      "default": "main",
-      "description": "Git ветка для публикации"
-    }
-  ]
+  "installCommand": "exit 0"
 }
