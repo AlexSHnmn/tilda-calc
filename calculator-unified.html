@@ -802,7 +802,6 @@ table.rt tr.grand-row td{background:var(--black);color:#fff;font-weight:700;font
         <div class="save-ok" id="email-ok">✓ Сохранено</div>
       </div>
       <div class="save-bar" style="margin-top:16px;border-top:1px solid var(--g2);padding-top:16px">
-        <button class="save-btn" onclick="embedSettings()" style="background:#2d7aee">📋 Встроить настройки в код</button>
         <div class="save-ok" id="embed-ok">✓ Скопировано</div>
       </div>
     </div>
@@ -1474,7 +1473,6 @@ const EMAIL_DEF={managerEmail:'',emailMethod:'formspree',emailKey:'',clientText:
 function getEmailSettings(){try{const emb=EMBEDDED_SETTINGS&&EMBEDDED_SETTINGS.email||{};return{...EMAIL_DEF,...emb,...JSON.parse(localStorage.getItem('stm_email')||'{}')};}catch(e){return{...EMAIL_DEF};}}
 function loadEmailSettings(){const e=getEmailSettings();const fields=['s_manager_email','s_email_method','s_email_key','s_email_client_text'];document.getElementById('s_manager_email').value=e.managerEmail||'';document.getElementById('s_email_method').value=e.emailMethod||'formspree';document.getElementById('s_email_key').value=e.emailKey||'';document.getElementById('s_email_client_text').value=e.clientText||EMAIL_DEF.clientText;fields.forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',markUnsaved);});}
 function saveEmailSettings(){const saved={managerEmail:document.getElementById('s_manager_email').value,emailMethod:document.getElementById('s_email_method').value,emailKey:document.getElementById('s_email_key').value,clientText:document.getElementById('s_email_client_text').value};localStorage.setItem('stm_email',JSON.stringify(saved));flash('email-ok');hasUnsavedChanges=false;autoPublish();}
-function embedSettings(){const settings={svc:JSON.parse(localStorage.getItem('stm_svc')||'{}'),txt:JSON.parse(localStorage.getItem('stm_txt')||'{}'),email:JSON.parse(localStorage.getItem('stm_email')||'{}'),cat:JSON.parse(localStorage.getItem('stm_cat')||'{}'),catCustom:JSON.parse(localStorage.getItem('stm_cat_custom')||'{}')};const code='const EMBEDDED_SETTINGS = '+JSON.stringify(settings)+';';navigator.clipboard.writeText(code).then(()=>{flash('embed-ok');alert('✓ Код скопирован в буфер обмена!\n\nВставьте его в HTML калькулятора, заменив строку:\nconst EMBEDDED_SETTINGS = null;');}).catch(()=>{alert('Ошибка копирования. Откройте консоль и скопируйте вручную:\n\n'+code);});}
 function showEmailForm(){if(curProd){document.getElementById('emailSec').style.display='block';document.getElementById('emailName').value='';document.getElementById('emailPhone').value='';document.getElementById('emailEmail').value='';document.getElementById('emailConsent').checked=false;document.getElementById('emailStatus').textContent='';document.getElementById('emailStatus').className='';document.getElementById('emailSubmitBtn').disabled=false;}}
 function validateEmail(email){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);}
 function showInfo(type){
