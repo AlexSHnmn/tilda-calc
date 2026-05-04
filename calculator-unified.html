@@ -1759,21 +1759,5 @@ renderCats();
   </div>
 </div>
 
-<script>
-// Отправлять высоту контента родительскому окну Tilda
-function notifyParentHeight() {
-  try {
-    const height = document.documentElement.scrollHeight;
-    window.parent.postMessage({type: 'iframeHeightChange', height: height}, '*');
-  } catch(e) {}
-}
-window.addEventListener('load', notifyParentHeight);
-window.addEventListener('resize', notifyParentHeight);
-new MutationObserver(notifyParentHeight).observe(document.body, {
-  subtree: true, childList: true, characterData: true, attributes: true
-});
-notifyParentHeight();
-</script>
-
 </body>
 </html>
