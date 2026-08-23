@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Калькулятор СТМ</title>
+  <style>
+:root{
+  --red:#DB0032;--red-dark:#b5001f;--red-soft:rgba(219,0,50,.09);
+  --black:#0f0f0f;--white:#ffffff;--off:#f5f5f7;
+  --g1:#f2f2f4;--g2:#e2e2e6;--g3:#ababaf;--g4:#444450;
+  --r:12px;--r-lg:20px;--r-sm:8px;--r-xs:6px;
+  --sh:0 2px 12px rgba(0,0,0,.07);--sh2:0 6px 28px rgba(0,0,0,.12);
+  --sh-red:0 4px 18px rgba(219,0,50,.24);
+  --tr:.18s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Inter",system-ui,sans-serif;background:var(--off);color:var(--black);line-height:1.6;font-size:14px;-webkit-font-smoothing:antialiased}
+
+/* FOOTER с кнопкой настроек */
+.page-footer{
+  text-align:center;padding:28px 16px 36px;
+  border-top:1px solid var(--g2);margin-top:16px;
+}
+.settings-trigger{
+  display:inline-flex;align-items:center;gap:6px;
+  background:transparent;border:none;
+  color:var(--g3);font-size:11px;font-weight:500;
+  letter-spacing:.06em;cursor:pointer;font-family:inherit;
+  transition:color var(--tr);padding:6px 10px;
+  text-transform:uppercase;
+}
+.settings-trigger:hover{color:var(--g4)}
+.settings-trigger svg{width:13px;height:13px;opacity:.7}
+.info-btn{background:var(--red);color:white;border:none;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;cursor:pointer;padding:0;transition:background var(--tr);}
+.info-btn:hover{background:var(--red-soft)}
+.info-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.95);z-index:1000;align-items:center;justify-content:center;}
+.info-modal.open{display:flex}
+.info-modal-content{background:white;border-radius:var(--r);padding:30px;max-width:500px;max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.3);}
+.info-modal-title{font-size:18px;font-weight:700;margin-bottom:15px;color:var(--black);}
+.info-modal-text{font-size:14px;line-height:1.6;color:var(--black);margin-bottom:20px;}
+.info-modal-close{background:var(--red);color:white;border:none;border-radius:var(--r-sm);padding:10px 20px;cursor:pointer;font-family:inherit;font-weight:500;transition:background var(--tr);}
+.info-modal-close:hover{background:var(--red-soft)}
+
+/* PRICE STICKER — яркий, фирменный */
+.price-sticker{
+  position:fixed;top:16px;right:16px;z-index:200;
+  background:#ffffff;
+  border:1.5px solid var(--g2);
+  border-radius:var(--r-lg);
+  padding:14px 18px 16px;min-width:200px;
+  box-shadow:0 8px 40px rgba(0,0,0,.13),0 2px 8px rgba(0,0,0,.07);
+  opacity:0;transform:translateY(-10px) scale(.95);
+  transition:all .3s cubic-bezier(.22,.9,.36,1);
+  pointer-events:none;
+}
+.price-sticker.show{opacity:1;transform:translateY(0) scale(1)}
+.ps-label{
+  font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--g3);margin-bottom:4px;
+}
+.ps-unit{
+  font-size:26px;font-weight:700;letter-spacing:-.03em;
+  color:var(--black);line-height:1.1;
+}
+.ps-unit span{font-size:14px;font-weight:600;color:var(--g3);letter-spacing:0}
+.ps-sep{height:1px;background:var(--g2);margin:10px 0}
+.ps-total-row{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:var(--red);border-radius:var(--r-sm);
+  padding:8px 12px;margin-top:2px;
+}
+.ps-total-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.75)}
+.ps-total-val{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.01em}
+.ps-qty{
+  font-size:11px;color:var(--g3);margin-top:6px;font-weight:500;letter-spacing:.02em;
+}
+.ps-name{
+  font-size:10px;color:var(--g3);margin-top:8px;font-weight:400;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;
+}
+
+/* HERO */
+.hero{
+  background:var(--red);
+  background-image:linear-gradient(135deg,#DB0032 0%,#a50026 100%);
+  color:#fff;padding:52px 32px 64px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.hero::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse 55% 90% at 100% 50%,rgba(255,255,255,.07) 0%,transparent 70%);
+  pointer-events:none;}
+.hero-sign-bg{
+  position:absolute;right:-45px;top:50%;transform:translateY(-50%);
+  height:260px;width:260px;object-fit:contain;opacity:.16;pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.9);
+  font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
+  padding:6px 18px;border-radius:100px;margin-bottom:20px;
+  background:rgba(255,255,255,.08);backdrop-filter:blur(6px);
+}
+.hero h1{
+  font-size:clamp(24px,4vw,46px);font-weight:700;line-height:1.14;
+  margin-bottom:12px;letter-spacing:-.02em;position:relative;
+}
+.hero p{
+  font-size:15px;color:rgba(255,255,255,.75);max-width:460px;
+  margin:0 auto;position:relative;line-height:1.65;
+}
+
+/* WRAP */
+.wrap{max-width:900px;margin:0 auto;padding:40px 22px 80px}
+
+/* STEP HEADER */
+.sec-block{margin-bottom:28px}
+.sec-h{font-size:18px;font-weight:700;margin-bottom:4px;letter-spacing:-.01em}
+.sec-s{font-size:12px;color:var(--g3);font-weight:400}
+
+/* TYPE LABEL */
+.type-label{
+  font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--g3);margin-bottom:8px;display:block;
+}
+
+/* CAT GRID */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px}
+.cat-card{
+  background:var(--white);border:1.5px solid var(--g2);border-radius:var(--r-lg);
+  padding:16px 10px 14px;cursor:pointer;transition:all var(--tr);text-align:center;
+  box-shadow:var(--sh);
+}
+.cat-card:hover{border-color:var(--red);transform:translateY(-2px);box-shadow:var(--sh2)}
+.cat-card.active{background:var(--red);border-color:var(--red);color:#fff;box-shadow:var(--sh-red)}
+.cat-card .ic{font-size:24px;display:block;margin-bottom:7px;line-height:1}
+.cat-card .nm{font-size:12px;font-weight:700;line-height:1.3}
+.cat-card .ct{font-size:10px;color:var(--g3);margin-top:3px}
+.cat-card.active .ct{color:rgba(255,255,255,.55)}
+
+/* SUBPILLS */
+.subpills{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px}
+.subpill{
+  padding:6px 15px;border:1.5px solid var(--g2);border-radius:100px;
+  font-size:12px;font-weight:600;cursor:pointer;background:var(--white);
+  color:var(--g4);transition:all var(--tr);
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.subpill:hover{border-color:var(--red);color:var(--red)}
+.subpill.active{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 2px 10px rgba(219,0,50,.22)}
+
+/* SELECT */
+.sel-wrap{position:relative;margin-bottom:22px}
+.sel-wrap select{
+  width:100%;padding:12px 42px 12px 16px;
+  border:1.5px solid var(--g2);border-radius:var(--r);
+  background:var(--white);font-family:inherit;font-size:14px;
+  color:var(--black);appearance:none;cursor:pointer;
+  transition:all var(--tr);box-shadow:var(--sh);font-weight:500;
+}
+.sel-wrap select:hover{border-color:var(--g3)}
+.sel-wrap select:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(219,0,50,.1)}
+.sel-wrap::after{content:"▾";position:absolute;right:15px;top:50%;transform:translateY(-50%);color:var(--g3);pointer-events:none}
+
+/* CFG */
+.cfg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px}
+@media(max-width:600px){.cfg{grid-template-columns:1fr}}
+.fld label{display:block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--g3);margin-bottom:6px}
+.fld input,.fld select{
+  width:100%;padding:11px 12px;border:1.5px solid var(--g2);border-radius:var(--r);
+  font-family:inherit;font-size:13px;background:var(--white);color:var(--black);
+  transition:all var(--tr);appearance:none;box-shadow:var(--sh);font-weight:500;
+}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(219,0,50,.1)}
+
+/* TOGGLES */
+.tog-sec{
+  background:var(--white);border:1.5px solid var(--g2);border-radius:var(--r-lg);
+  padding:14px 16px;box-shadow:var(--sh);
+}
+.tog-sec h3{font-size:13px;font-weight:700;margin-bottom:3px}
+.tog-sec .hint{font-size:11px;color:var(--g3);margin-bottom:12px}
+.tog-row{display:flex;gap:8px;flex-wrap:wrap}
+.tog{
+  display:flex;align-items:center;gap:7px;padding:7px 14px;
+  border:1.5px solid var(--g2);border-radius:var(--r);
+  cursor:pointer;font-size:12px;font-weight:600;background:var(--white);
+  color:var(--g4);transition:all var(--tr);user-select:none;
+}
+.tog:hover{border-color:var(--red);color:var(--red)}
+.tog.on{border-color:var(--red);background:var(--red-soft);color:var(--red);box-shadow:0 1px 8px rgba(219,0,50,.1)}
+.tog .dot{width:12px;height:12px;border-radius:50%;border:2px solid currentColor;transition:all var(--tr);flex-shrink:0}
+.tog.on .dot{background:var(--red);border-color:var(--red)}
+.tog-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+@media(max-width:540px){.tog-grid{grid-template-columns:1fr}}
+
+/* NOTICE */
+.notice{
+  background:rgba(219,0,50,.05);border:1px solid rgba(219,0,50,.15);
+  border-radius:var(--r);padding:11px 15px;font-size:12px;
+  color:#8a001a;margin-bottom:18px;line-height:1.55;font-weight:500;
+}
+
+/* RESULT */
+.result{display:none;animation:fadeUp .32s cubic-bezier(.22,.9,.36,1)}
+.result.show{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.r-top{
+  background:var(--red);background-image:linear-gradient(135deg,#DB0032 0%,#a50026 100%);
+  color:#fff;border-radius:var(--r-lg) var(--r-lg) 0 0;padding:22px 26px;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;
+}
+.r-top h2{font-size:16px;font-weight:700;margin-bottom:3px;letter-spacing:-.01em}
+.r-top .meta{font-size:11px;color:rgba(255,255,255,.7)}
+.rprices{text-align:right}
+.r-unit{font-size:28px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.r-total{font-size:12px;color:rgba(255,255,255,.7);margin-top:4px;font-weight:500}
+.r-body{
+  background:var(--white);border:1.5px solid var(--g2);border-top:none;
+  border-radius:0 0 var(--r-lg) var(--r-lg);overflow:hidden;
+  box-shadow:0 6px 28px rgba(0,0,0,.07);
+}
+table.rt{width:100%;border-collapse:collapse}
+table.rt thead tr{background:var(--g1)}
+table.rt th{padding:9px 18px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--g3);font-weight:700;text-align:left}
+table.rt th:last-child{text-align:right}
+table.rt td{padding:11px 18px;font-size:13px;border-bottom:1px solid var(--g1);vertical-align:top}
+table.rt td:last-child{text-align:right;font-weight:600;white-space:nowrap}
+table.rt tr:last-child td{border-bottom:none}
+table.rt tr:hover td{background:rgba(219,0,50,.02)}
+table.rt tr.zero-row td{color:var(--g2)}
+table.rt tr.total-row td{background:var(--g1);font-weight:700;font-size:14px;border-top:2px solid var(--g2);border-bottom:none}
+table.rt tr.grand-row td{background:var(--black);color:#fff;font-weight:700;font-size:15px;border:none}
+.rn{display:block;font-size:10px;color:var(--g3);font-weight:400;margin-top:2px}
+.result-disclaimer{background:rgba(219,0,50,.02);border:1px solid rgba(219,0,50,.1);border-radius:var(--r-sm);padding:12px 14px;font-size:11px;color:#a8666d;line-height:1.5;margin-top:14px;font-weight:400}
+
+/* ADMIN OVERLAY */
+.ov{display:none;position:fixed;inset:0;background:rgba(10,10,10,.75);z-index:500;
+  align-items:center;justify-content:center;padding:20px;
+  backdrop-filter:blur(10px);overflow-y:auto}
+.ov.open{display:flex}
+.modal{
+  background:var(--white);border-radius:var(--r-lg);width:100%;max-width:920px;
+  max-height:90vh;
+  box-shadow:0 32px 80px rgba(0,0,0,.4);margin:auto;overflow-y:auto;overflow-x:hidden;
+}
+.pwd-scr{padding:40px 36px}
+.pwd-scr h2{font-size:20px;font-weight:700;margin-bottom:6px}
+.pwd-scr p{font-size:13px;color:var(--g3);margin-bottom:20px}
+.pwd-scr .adm-close{background:var(--g1);color:var(--black);border:1.5px solid var(--g2)}
+.pwd-scr .adm-close:hover{background:var(--g2)}
+.pwd-inp{
+  width:100%;padding:12px 14px;border:1.5px solid var(--g2);border-radius:var(--r);
+  font-size:14px;font-family:inherit;margin-bottom:11px;transition:all var(--tr);
+}
+.pwd-inp:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(219,0,50,.1)}
+.pwd-btn{
+  width:100%;padding:13px;background:var(--red);
+  background-image:linear-gradient(135deg,#DB0032 0%,#b5001f 100%);
+  color:#fff;border:none;border-radius:var(--r);font-family:inherit;
+  font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.06em;
+  text-transform:uppercase;box-shadow:var(--sh-red);transition:all var(--tr);
+}
+.pwd-btn:hover{box-shadow:0 8px 24px rgba(219,0,50,.38);transform:translateY(-1px)}
+.pwd-err{color:var(--red);font-size:12px;font-weight:600;margin-top:8px;display:none}
+.adm-hdr{
+  background:var(--red);background-image:linear-gradient(135deg,#DB0032 0%,#a50026 100%);
+  color:#fff;padding:16px 26px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:2;
+}
+.adm-hdr h2{font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.adm-close{
+  background:rgba(255,255,255,.18);border:none;color:#fff;
+  width:30px;height:30px;border-radius:var(--r-sm);cursor:pointer;
+  font-size:16px;display:flex;align-items:center;justify-content:center;
+  transition:background var(--tr);
+}
+.adm-close:hover{background:rgba(255,255,255,.3)}
+.adm-tabs{
+  display:flex;border-bottom:2px solid var(--g2);background:var(--white);
+  overflow-x:auto;padding:0 22px;
+}
+.adm-tab{
+  padding:12px 15px;font-size:11px;font-weight:700;cursor:pointer;color:var(--g3);
+  border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;
+  transition:all var(--tr);letter-spacing:.05em;text-transform:uppercase;
+}
+.adm-tab:hover{color:var(--black)}
+.adm-tab.active{color:var(--red);border-bottom-color:var(--red)}
+.adm-panel{display:none;padding:22px 26px;overflow:hidden}
+.adm-panel.active{display:block}
+.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-bottom:24px}
+@media(max-width:500px){.svc-grid{grid-template-columns:1fr}}
+.svc-sec{
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--red);padding-bottom:7px;border-bottom:2px solid rgba(219,0,50,.2);margin-bottom:14px;
+  word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;
+}
+.svc-fld label{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g3);margin-bottom:5px}
+.svc-fld input{
+  width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);
+  font-size:13px;font-family:inherit;background:var(--white);transition:all var(--tr);font-weight:500;
+}
+.svc-fld input:focus{outline:none;border-color:var(--red)}
+.prod-search{
+  width:100%;padding:10px 13px;border:1.5px solid var(--g2);border-radius:var(--r);
+  font-size:13px;font-family:inherit;margin-bottom:14px;transition:all var(--tr);
+}
+.prod-search:focus{outline:none;border-color:var(--red)}
+.prod-table{width:100%;border-collapse:collapse}
+.prod-table th{background:var(--g1);padding:8px 10px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--g3);font-weight:700;text-align:left;position:sticky;top:0;border-bottom:2px solid var(--g2)}
+.prod-table td{padding:8px 10px;font-size:12px;border-bottom:1px solid var(--g1);vertical-align:middle;font-weight:500}
+.prod-table tr:hover td{background:rgba(219,0,50,.02)}
+.prod-table tr.hidden-prod td{opacity:.38}
+.prod-name{font-weight:700}
+.price-inp{
+  width:68px;padding:5px 7px;border:1.5px solid var(--g2);border-radius:var(--r-xs);
+  font-size:12px;font-family:inherit;text-align:right;transition:all var(--tr);font-weight:500;
+}
+.price-inp:focus{outline:none;border-color:var(--red)}
+.sw{position:relative;display:inline-block;width:38px;height:22px}
+.sw input{opacity:0;width:0;height:0}
+.sw-slider{position:absolute;cursor:pointer;inset:0;background:var(--g2);border-radius:22px;transition:.2s}
+.sw-slider::before{content:"";position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.sw input:checked+.sw-slider{background:var(--red)}
+.sw input:checked+.sw-slider::before{transform:translateX(16px)}
+.save-bar{display:flex;align-items:center;gap:14px;padding:14px 0 4px;border-top:1.5px solid var(--g2);margin-top:8px}
+.save-btn{
+  padding:11px 24px;background:var(--red);
+  background-image:linear-gradient(135deg,#DB0032 0%,#b5001f 100%);
+  color:#fff;border:none;border-radius:var(--r);font-family:inherit;font-size:12px;
+  font-weight:700;cursor:pointer;transition:all var(--tr);letter-spacing:.07em;text-transform:uppercase;box-shadow:var(--sh-red);
+}
+.save-btn:hover{box-shadow:0 6px 20px rgba(219,0,50,.35);transform:translateY(-1px)}
+.save-ok{color:var(--red);font-size:12px;font-weight:700;display:none}
+.table-wrap{max-height:440px;overflow-y:auto;border:1.5px solid var(--g2);border-radius:var(--r)}
+.txt-grid{display:grid;gap:12px;margin-bottom:20px}
+.txt-fld label{display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g3);margin-bottom:5px}
+.txt-fld input,.txt-fld textarea{
+  width:100%;padding:8px 11px;border:1.5px solid var(--g2);border-radius:var(--r-sm);
+  font-size:13px;font-family:inherit;background:var(--white);resize:vertical;
+  transition:all var(--tr);min-height:36px;
+}
+.txt-fld input:focus,.txt-fld textarea:focus{outline:none;border-color:var(--red)}
+
+/* EMAIL SECTION */
+.email-sec{
+  background:var(--white);border:1.5px solid var(--g2);border-radius:var(--r-lg);
+  padding:22px 24px;margin-top:28px;margin-bottom:20px;box-shadow:var(--sh);
+}
+.email-sec h3{font-size:15px;font-weight:700;margin-bottom:3px}
+.email-sec .hint{font-size:12px;color:var(--g3);margin-bottom:16px}
+.email-form{display:flex;flex-direction:column;gap:14px}
+.email-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:600px){.email-grid{grid-template-columns:1fr}}
+.email-grid .txt-fld label{display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--g3);margin-bottom:4px}
+.email-grid .txt-fld input{
+  width:100%;padding:8px 11px;border:1.5px solid var(--g2);border-radius:var(--r-sm);
+  font-size:13px;font-family:inherit;background:var(--white);
+  transition:all var(--tr);font-weight:500;
+}
+.email-grid .txt-fld input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(219,0,50,.1)}
+.consent-check{display:flex;align-items:flex-start}
+.consent-check label{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--g4);line-height:1.5;cursor:pointer;user-select:none}
+.consent-check input[type="checkbox"]{width:18px;height:18px;margin-top:1px;cursor:pointer;flex-shrink:0}
+.consent-check a{color:var(--red);text-decoration:none}
+.consent-check a:hover{text-decoration:underline}
+.email-actions{display:flex;align-items:center;gap:12px;margin-top:4px}
+.email-status{font-size:12px;font-weight:600}
+.email-status.success{color:#22863a;display:flex;align-items:center;gap:6px}
+.email-status.error{color:var(--red);display:flex;align-items:center;gap:6px}
+
+.add-prod-btn{
+  display:block;width:100%;padding:11px;background:transparent;border:1.5px dashed var(--g2);
+  border-radius:var(--r);color:var(--g3);font-size:13px;font-weight:600;
+  cursor:pointer;text-align:center;transition:all var(--tr);margin-bottom:14px;
+  font-family:inherit;letter-spacing:.05em;text-transform:uppercase;
+}
+.add-prod-btn:hover{border-color:var(--red);color:var(--red);background:rgba(219,0,50,.02)}
+.add-prod-form{
+  display:none;background:var(--off);border:1.5px solid var(--g2);border-radius:var(--r);
+  padding:16px;margin-bottom:14px;
+}
+.add-prod-form.open{display:block}
+.add-prod-form .txt-grid{margin-bottom:12px;gap:10px}
+.add-prod-form .txt-grid > div{display:grid;grid-template-columns:1fr}
+.add-prod-form label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g3);margin-bottom:4px;display:block}
+.add-prod-form input,.add-prod-form select{
+  width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);
+  font-size:12px;font-family:inherit;background:var(--white);transition:all var(--tr);font-weight:500;
+}
+.add-prod-form input:focus,.add-prod-form select:focus{outline:none;border-color:var(--red)}
+.add-prod-prices{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.add-prod-prices input{width:100%;padding:8px 6px;font-size:11px}
+.add-prod-form-actions{display:flex;gap:8px}
+.add-prod-save{padding:9px 18px;background:var(--red);color:#fff;border:none;border-radius:var(--r-sm);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.05em}
+.add-prod-save:hover{opacity:.9}
+.add-prod-cancel{padding:9px 18px;background:transparent;color:var(--g3);border:1px solid var(--g2);border-radius:var(--r-sm);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:.05em;transition:all var(--tr)}
+.add-prod-cancel:hover{color:var(--black);border-color:var(--black)}
+.del-btn{
+  padding:5px 10px;background:#fff;border:1px solid #dc3545;color:#dc3545;border-radius:var(--r-xs);
+  font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all var(--tr);
+  text-transform:uppercase;letter-spacing:.04em;
+}
+.del-btn:hover{background:#dc3545;color:#fff}
+.info-tip{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:var(--g3);color:white;border-radius:50%;font-size:12px;font-weight:bold;cursor:help;margin-left:6px;position:relative;vertical-align:middle}
+.info-tip:hover::after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--g4);color:white;padding:8px 12px;border-radius:var(--r-sm);font-size:12px;font-weight:normal;white-space:nowrap;z-index:100;margin-bottom:6px}
+.info-tip:hover::before{content:'';position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:-4px;border:4px solid transparent;border-top-color:var(--g4);z-index:100}
+@media(max-width:640px){
+  .r-top{flex-direction:column}.rprices{text-align:left}
+  .wrap{padding:28px 14px 60px}.hero{padding:40px 18px 52px}
+  .price-sticker{right:10px;min-width:170px}
+  .price-sticker .ps-unit{font-size:21px}
+  .email-grid{grid-template-columns:1fr}
+  .add-prod-prices{grid-template-columns:1fr}
+}
+  </style>
+</head>
+<body>
+
+<div id='stm-root'>
+<!-- Floating price sticker -->
+<div class="price-sticker" id="priceSticker">
+  <div class="ps-label">Стоимость единицы</div>
+  <div class="ps-unit" id="psUnit">—<span> ₽</span></div>
+  <div class="ps-qty" id="psQty">—</div>
+  <div class="ps-sep"></div>
+  <div class="ps-total-row">
+    <div class="ps-total-label">Весь заказ</div>
+    <div class="ps-total-val" id="psTotal">—</div>
+  </div>
+  <div class="ps-name" id="psName"></div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge" id="txt-badge">Калькулятор СТМ</div>
+  <h1 id="txt-hero-h1">Стоимость вашего бренда —<br>за 2 минуты</h1>
+  <p id="txt-hero-p">Выберите продукт, объём и тираж. Система рассчитает полную стоимость производства с разбивкой по каждой статье.</p>
+</div>
+
+<div class="wrap">
+
+  <!-- STEP 1 -->
+  <div class="sec-block">
+    <div class="sec-h" id="txt-s1h">1 · Категория и продукт</div>
+    <div class="sec-s" id="txt-s1s">Выберите категорию, тип продукта и конкретное наименование</div>
+  </div>
+
+  <div class="cat-grid" id="catGrid"></div>
+
+  <!-- Type label + subcategory pills -->
+  <span class="type-label" id="txt-type-label">Тип продукта (вид и назначение)</span>
+  <div class="subpills" id="subpills"></div>
+
+  <div class="sel-wrap">
+    <select id="prodSel" onchange="onProd()">
+      <option value="">— выберите продукт —</option>
+    </select>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="sec-block" style="margin-top:8px">
+    <div class="sec-h" id="txt-s2h">2 · Параметры заказа</div>
+    <div class="sec-s" id="txt-s2s">Укажите объём тары, количество и город доставки</div>
+  </div>
+
+  <div class="notice" id="txt-notice">
+    📌 Минимальный заказ — <strong>от 500 штук</strong>. Минимальная варка — <strong>300 литров</strong>. Чем выше тираж, тем ниже цена единицы.
+  </div>
+
+  <div class="cfg">
+    <div class="fld">
+      <label id="txt-lbl-vol">Объём тары</label>
+      <select id="volSel" onchange="liveCalc()">
+        <option value="0.05">50 мл</option>
+        <option value="0.1">100 мл</option>
+        <option value="0.15">150 мл</option>
+        <option value="0.2">200 мл</option>
+        <option value="0.25">250 мл</option>
+        <option value="0.3" selected>300 мл</option>
+        <option value="0.4">400 мл</option>
+        <option value="0.5">500 мл</option>
+        <option value="0.75">750 мл</option>
+        <option value="1.0">1 000 мл (1 л)</option>
+        <option value="1.5">1 500 мл</option>
+        <option value="2.0">2 000 мл (2 л)</option>
+        <option value="5.0">5 000 мл (5 л)</option>
+      </select>
+    </div>
+    <div class="fld">
+      <label id="txt-lbl-qty">Количество штук</label>
+      <input type="number" id="qtyInp" value="1000" min="500" step="100" oninput="liveCalc()">
+    </div>
+    <div class="fld">
+      <label id="txt-lbl-city">Город доставки</label>
+      <select id="citySel" onchange="liveCalc()">
+        <option value="other">Другой город (по запросу)</option>
+        <option value="kursk">Курск - Ozon/WB</option>
+        <option value="mkad">Москва - внутри МКАД</option>
+        <option value="moscow">Москва - за МКАД</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="tog-grid">
+  <div class="tog-sec">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 id="txt-recipe-h">Рецептура</h3>
+      <button class="info-btn" onclick="showInfo('recipe')" title="Справка">?</button>
+    </div>
+    <div class="hint" id="txt-recipe-hint">Использовать стандартную рецептуру или разработать свою?</div>
+    <div class="tog-row">
+      <div class="tog on" id="recipe-standard" onclick="setRecipe('standard')"><div class="dot"></div><span id="txt-recipe-standard">Стандартная рецептура (бесплатно)</span></div>
+      <div class="tog" id="recipe-custom" onclick="setRecipe('custom')"><div class="dot"></div><span id="txt-recipe-custom">Индивидуальная разработка</span></div>
+    </div>
+  </div>
+
+  <div class="tog-sec">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 id="txt-tare-h">Тара и укупорка</h3>
+      <button class="info-btn" onclick="showInfo('tare')" title="Справка">?</button>
+    </div>
+    <div class="hint" id="txt-tare-hint">Кто предоставляет упаковку?</div>
+    <div class="tog-row">
+      <div class="tog on" id="tare-us" onclick="setTare('us')"><div class="dot"></div><span id="txt-tare-us">Предоставляет поставщик</span></div>
+      <div class="tog" id="tare-cl" onclick="setTare('cl')"><div class="dot"></div><span id="txt-tare-cl">Предоставляет клиент</span></div>
+    </div>
+  </div>
+
+  <div class="tog-sec">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 id="txt-lbl-h">Способ этикетирования</h3>
+      <button class="info-btn" onclick="showInfo('lbl')" title="Справка">?</button>
+    </div>
+    <div class="hint" id="txt-lbl-hint">Как клеится этикетка?</div>
+    <div class="tog-row">
+      <div class="tog on" id="lbl-auto" onclick="setLbl('auto')"><div class="dot"></div><span id="txt-lbl-auto">Машинная (1 этикетка)</span></div>
+      <div class="tog" id="lbl-m1" onclick="setLbl('m1')"><div class="dot"></div><span id="txt-lbl-m1">Ручная (1 этикетка)</span></div>
+      <div class="tog" id="lbl-m2" onclick="setLbl('m2')"><div class="dot"></div><span id="txt-lbl-m2">Ручная (2 этикетки)</span></div>
+    </div>
+  </div>
+
+  <div class="tog-sec">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 id="txt-package-h">Упаковка и маркировка</h3>
+      <button class="info-btn" onclick="showInfo('package')" title="Справка">?</button>
+    </div>
+    <div class="hint" id="txt-package-hint">Вид упаковки для клиента</div>
+    <div class="tog-row">
+      <div class="tog on" id="package-individual" onclick="setPackage('individual')"><div class="dot"></div><span id="txt-package-individual">Индивидуальная, для маркетплейсов</span></div>
+      <div class="tog" id="package-group" onclick="setPackage('group')"><div class="dot"></div><span id="txt-package-group">Групповая, без доп.упаковки</span></div>
+    </div>
+  </div>
+
+  <div class="tog-sec">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 id="txt-trademark-h">Товарный знак</h3>
+      <button class="info-btn" onclick="showInfo('trademark')" title="Справка">?</button>
+    </div>
+    <div class="hint" id="txt-trademark-hint">Нужна ли регистрация товарного знака?</div>
+    <div class="tog-row">
+      <div class="tog on" id="trademark-none" onclick="setTrademark('none')"><div class="dot"></div><span id="txt-trademark-none">Товарный знак уже есть</span></div>
+      <div class="tog" id="trademark-reg" onclick="setTrademark('reg')"><div class="dot"></div><span id="txt-trademark-reg">Нужна регистрация</span></div>
+      <div class="tog" id="trademark-self" onclick="setTrademark('self')"><div class="dot"></div><span id="txt-trademark-self">Буду регистрировать самостоятельно</span></div>
+    </div>
+  </div>
+
+  <div class="tog-sec">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 id="txt-design-h">Дизайн упаковки</h3>
+      <button class="info-btn" onclick="showInfo('design')" title="Справка">?</button>
+    </div>
+    <div class="hint" id="txt-design-hint">Разработка дизайна и подготовка макетов к печати</div>
+    <div class="tog-row">
+      <div class="tog on" id="design-none" onclick="setDesign('none')"><div class="dot"></div><span id="txt-design-none">Не нужен</span></div>
+      <div class="tog" id="design-basic" onclick="setDesign('basic')"><div class="dot"></div><span id="txt-design-basic">Базовый</span></div>
+      <div class="tog" id="design-full" onclick="setDesign('full')"><div class="dot"></div><span id="txt-design-full">Полный пакет</span></div>
+    </div>
+  </div>
+  </div>
+
+  <!-- RESULT (auto-shown) -->
+  <div class="result" id="result">
+    <div class="r-top">
+      <div>
+        <h2 id="rName">—</h2>
+        <div class="meta" id="rMeta"></div>
+      </div>
+      <div class="rprices">
+        <div class="r-unit" id="rUnit">—</div>
+        <div class="r-total" id="rTotal"></div>
+      </div>
+    </div>
+    <div class="r-body">
+      <table class="rt">
+        <thead><tr><th id="txt-col1">Статья расходов</th><th id="txt-col2">₽ / ед.</th></tr></thead>
+        <tbody id="rRows"></tbody>
+      </table>
+      <div class="result-disclaimer" id="resultDisclaimer"></div>
+    </div>
+  </div>
+
+  <!-- EMAIL SUBMISSION BLOCK -->
+  <div class="email-sec" id="emailSec" style="display:none">
+    <h3 id="txt-email-h">Получить расчёт на почту</h3>
+    <div class="hint" id="txt-email-hint">Заполните данные, чтобы получить детальный расчёт</div>
+    <div class="email-form">
+      <div class="email-grid">
+        <div class="txt-fld">
+          <label id="txt-email-name-lbl">Ваше имя</label>
+          <input type="text" id="emailName" placeholder="Иван Сидоров">
+        </div>
+        <div class="txt-fld">
+          <label id="txt-email-phone-lbl">Телефон</label>
+          <input type="tel" id="emailPhone" placeholder="+7 (999) 999-99-99">
+        </div>
+        <div class="txt-fld">
+          <label id="txt-email-email-lbl">Email</label>
+          <input type="email" id="emailEmail" placeholder="your@email.com">
+        </div>
+      </div>
+      <div class="consent-check">
+        <label>
+          <input type="checkbox" id="emailConsent">
+          <span id="txt-email-consent">Я согласен на обработку персональных данных согласно <a href="#" target="_blank">политике конфиденциальности</a></span>
+        </label>
+      </div>
+      <div class="email-actions">
+        <button class="save-btn" onclick="submitCalculation()" id="emailSubmitBtn">💾 Сохранить расчет</button>
+        <div class="email-status" id="emailStatus"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Подвал с кнопкой настроек -->
+<div class="page-footer">
+  <button class="settings-trigger" onclick="openAdmin()">
+    <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 1.5a.5.5 0 0 1 .491.405l.193.87a5.5 5.5 0 0 1 1.04.603l.84-.273a.5.5 0 0 1 .595.224l.5.866a.5.5 0 0 1-.1.632l-.683.572a5.5 5.5 0 0 1 0 1.202l.683.572a.5.5 0 0 1 .1.632l-.5.866a.5.5 0 0 1-.595.224l-.84-.273a5.5 5.5 0 0 1-1.04.603l-.193.87A.5.5 0 0 1 8 14.5a.5.5 0 0 1-.491-.405l-.193-.87a5.5 5.5 0 0 1-1.04-.603l-.84.273a.5.5 0 0 1-.595-.224l-.5-.866a.5.5 0 0 1 .1-.632l.683-.572a5.5 5.5 0 0 1 0-1.202l-.683-.572a.5.5 0 0 1-.1-.632l.5-.866a.5.5 0 0 1 .595-.224l.84.273a5.5 5.5 0 0 1 1.04-.603l.193-.87A.5.5 0 0 1 8 1.5z" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>
+    Настройки
+  </button>
+</div>
+
+<!-- ADMIN OVERLAY -->
+<div class="ov" id="aOv">
+<div class="modal" id="aModal">
+
+  <div class="pwd-scr" id="pwdScr">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="margin:0">Настройки</h2>
+      <button class="adm-close" onclick="closeAdmin()" style="width:30px;height:30px">✕</button>
+    </div>
+    <p>Введите пароль для доступа</p>
+    <input class="pwd-inp" type="password" id="pwdInp" placeholder="Пароль"
+           onkeydown="if(event.key==='Enter')chkPwd()">
+    <button class="pwd-btn" onclick="chkPwd()">Войти →</button>
+    <div class="pwd-err" id="pwdErr">Неверный пароль</div>
+  </div>
+
+  <div id="admCont" style="display:none">
+    <div class="adm-hdr">
+      <h2>⚙ Настройки калькулятора</h2>
+      <button class="adm-close" onclick="closeAdmin()">✕</button>
+    </div>
+    <div class="adm-tabs">
+      <div class="adm-tab active" onclick="admTab('svc')">Тарифы</div>
+      <div class="adm-tab" onclick="admTab('email')">Email</div>
+      <div class="adm-tab" onclick="admTab('txt')">Тексты</div>
+      <div class="adm-tab" onclick="admTab('help')">📖 Справка</div>
+      <div class="adm-tab" onclick="admTab('cosm')">💆 Косметика</div>
+      <div class="adm-tab" onclick="admTab('kids')">🍼 Дети</div>
+      <div class="adm-tab" onclick="admTab('home')">🕯️ Для дома</div>
+      <div class="adm-tab" onclick="admTab('chem')">🧺 Стирка/Уборка</div>
+      <div class="adm-tab" onclick="admTab('pets')">🐾 Животные</div>
+      <div class="adm-tab" onclick="admTab('pub')">⚡ Публикация</div>
+    </div>
+
+    <!-- SERVICES PANEL -->
+    <div class="adm-panel active" id="ap-svc">
+      <div class="svc-sec">Производство (₽ / единица) <span class="info-tip" data-tip="Стоимость производственных процессов за одну единицу продукта">?</span></div>
+      <div class="svc-grid">
+        <div class="svc-fld"><label>Фасовка — жидкая</label><input type="number" id="s_liq" step=".1"></div>
+        <div class="svc-fld"><label>Фасовка — кремовая</label><input type="number" id="s_crm" step=".1"></div>
+        <div class="svc-fld"><label>Фасовка — сухая / скраб</label><input type="number" id="s_dry" step=".1"></div>
+        <div class="svc-fld"><label>Маркировка (дата, партия)</label><input type="number" id="s_mark" step=".1"></div>
+        <div class="svc-fld"><label>Индивидуальная разработка рецептуры (за весь заказ)</label><input type="number" id="s_dev_cost" step="1"></div>
+        <div class="svc-fld"><label>Дизайн упаковки — Базовый пакет (÷ тираж)</label><input type="number" id="s_design_basic" step="1"></div>
+        <div class="svc-fld"><label>Дизайн упаковки — Полный пакет (÷ тираж)</label><input type="number" id="s_design_full" step="1"></div>
+      </div>
+      <div class="svc-sec">Этикетирование (₽ / единица) <span class="info-tip" data-tip="Стоимость наклеивания этикеток на флаконы">?</span></div>
+      <div class="svc-grid">
+        <div class="svc-fld"><label>Машинная (1 эт.)</label><input type="number" id="s_la" step=".1"></div>
+        <div class="svc-fld"><label>Ручная (1 эт.)</label><input type="number" id="s_lm1" step=".1"></div>
+        <div class="svc-fld"><label>Ручная (2 эт.)</label><input type="number" id="s_lm2" step=".1"></div>
+      </div>
+      <div class="svc-sec">Документы и маркировка ЧЗ (₽ / единица) <span class="info-tip" data-tip="Регистрация товара, штрих-коды, маркировка и документы">?</span></div>
+      <div class="svc-grid">
+        <div class="svc-fld"><label>Честный знак — ввод в оборот</label><input type="number" id="s_chz" step=".1"></div>
+        <div class="svc-fld"><label>Маркировка ЧЗ (нанесение)</label><input type="number" id="s_chz_mark" step=".1"></div>
+        <div class="svc-fld"><label>Декларация соответствия (÷ тираж)</label><input type="number" id="s_decl" step=".1"></div>
+        <div class="svc-fld"><label>СГР — дет. линейка (÷ тираж)</label><input type="number" id="s_sgr" step=".1"></div>
+        <div class="svc-fld"><label>GTIN — штрих-код ГС1</label><input type="number" id="s_gtin" step=".1"></div>
+      </div>
+      <div class="svc-sec">Регистрационные документы по категориям <span class="info-tip" data-tip="Выберите требуемый документ для каждой категории товаров">?</span></div>
+      <div class="svc-grid">
+        <div class="svc-fld"><label>💆 Косметика</label><select id="s_doctype_cosm" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--white);"></select></div>
+        <div class="svc-fld"><label>🍼 Для детей</label><select id="s_doctype_kids" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--white);"></select></div>
+        <div class="svc-fld"><label>🕯️ Для дома</label><select id="s_doctype_home" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--white);"></select></div>
+        <div class="svc-fld"><label>🧺 Стирка/Уборка</label><select id="s_doctype_chem" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--white);"></select></div>
+        <div class="svc-fld"><label>🐾 Для животных</label><select id="s_doctype_pets" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--white);"></select></div>
+      </div>
+      <div class="svc-sec">Упаковка и отгрузка (₽ / единица) <span class="info-tip" data-tip="Стоимость упаковки, паллетирования и подготовки к отгрузке">?</span></div>
+      <div class="svc-grid">
+        <div class="svc-fld"><label>Упаковка индивидуальная (маркетплейсы)</label><input type="number" id="s_pack_individual" step=".1"></div>
+        <div class="svc-fld"><label>Упаковка групповая (без доп.упаковки)</label><input type="number" id="s_pack_group" step=".1"></div>
+        <div class="svc-fld"><label>Укладка в транспортные короба</label><input type="number" id="s_box" step=".1"></div>
+        <div class="svc-fld"><label>Подбор тарного короба (с коробом)</label><input type="number" id="s_bsel" step=".1"></div>
+        <div class="svc-fld"><label>Паллетирование + целлофан</label><input type="number" id="s_pal" step=".1"></div>
+        <div class="svc-fld"><label>Погрузо-разгрузочные работы</label><input type="number" id="s_load" step=".1"></div>
+      </div>
+      <div class="svc-sec">Доставка (₽ за рейс, до 16 паллет) <span class="info-tip" data-tip="Стоимость доставки полного рейса по разным городам">?</span></div>
+      <div class="svc-grid">
+        <div class="svc-fld"><label>Курск - Ozon/WB (полный рейс)</label><input type="number" id="s_dkur"></div>
+        <div class="svc-fld"><label>Москва - внутри МКАД (полный рейс)</label><input type="number" id="s_dmkd"></div>
+        <div class="svc-fld"><label>Москва - за МКАД (полный рейс)</label><input type="number" id="s_dmsc"></div>
+      </div>
+      <div class="svc-sec">Цены тары по объемам (₽ за единицу) <span class="info-tip" data-tip="Установите стоимость упаковки (флакона + крышки) для каждого объема">?</span></div>
+      <div style="margin-bottom:20px">
+        <table id="tarePricesTable" style="width:100%;border-collapse:collapse;margin-bottom:12px">
+          <thead>
+            <tr style="border-bottom:2px solid var(--g2)">
+              <th style="text-align:left;padding:8px;font-size:11px;font-weight:600;color:var(--g3);text-transform:uppercase">Объем (л)</th>
+              <th style="text-align:left;padding:8px;font-size:11px;font-weight:600;color:var(--g3);text-transform:uppercase">Цена (₽)</th>
+              <th style="text-align:center;padding:8px;width:50px"></th>
+            </tr>
+          </thead>
+          <tbody id="tarePricesBody"></tbody>
+        </table>
+        <button class="add-tare-btn" onclick="addTarePrice()" style="background:var(--red);color:white;border:none;border-radius:var(--r-sm);padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:background var(--tr)">+ Добавить объем</button>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveSvc()">💾 Сохранить тарифы</button>
+        <div class="save-ok" id="svc-ok">✓ Сохранено</div>
+      </div>
+    </div>
+
+
+    <!-- EMAIL SETTINGS PANEL -->
+    <div class="adm-panel" id="ap-email">
+      <div class="svc-sec">Настройки Email-уведомлений <span class="info-tip" data-tip="Укажите способ отправки расчётов клиентам и менеджерам">?</span></div>
+      <div class="txt-grid">
+        <div class="txt-fld">
+          <label>Email менеджера (для копии расчётов)</label>
+          <input type="email" id="s_manager_email" placeholder="manager@company.com">
+        </div>
+        <div class="txt-fld">
+          <label>Способ отправки почты</label>
+          <select id="s_email_method" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--white);">
+            <option value="formspree">Formspree (требует настройки)</option>
+            <option value="emailjs">EmailJS (требует API ключа)</option>
+            <option value="backend">Свой бэкенд (POST запрос)</option>
+            <option value="disabled">Отключено</option>
+          </select>
+        </div>
+        <div class="txt-fld">
+          <label>API ключ / URL (если требуется)</label>
+          <input type="text" id="s_email_key" placeholder="Введите API ключ или URL бэкенда">
+        </div>
+        <div class="txt-fld">
+          <label>Текст в письме клиенту (после основного расчёта)</label>
+          <textarea id="s_email_client_text" rows="3" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--white);resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveEmailSettings()">💾 Сохранить Email настройки</button>
+        <div class="save-ok" id="email-ok">✓ Сохранено</div>
+      </div>
+      <div class="save-bar" style="margin-top:16px;border-top:1px solid var(--g2);padding-top:16px">
+        <div class="save-ok" id="embed-ok">✓ Скопировано</div>
+      </div>
+    </div>
+
+    <!-- HELP PANEL -->
+    <div class="adm-panel" id="ap-help">
+      <div class="svc-sec">📖 Инструкции для администратора</div>
+      <div style="background:#f9f9fb;border-radius:var(--r);padding:16px;margin-bottom:20px;border:1px solid var(--g2)">
+        <p style="font-size:13px;line-height:1.6;color:var(--black);margin:0">Добро пожаловать! На этой странице вы найдёте подробные инструкции по каждому разделу настроек. Разверните интересующий вас раздел, чтобы узнать, как он работает и как он влияет на расчёты для клиентов.</p>
+      </div>
+
+      <style>.adm-help-item{border:1px solid var(--g2);border-radius:var(--r);margin-bottom:12px;overflow:hidden}.adm-help-title{padding:14px 16px;background:var(--g1);cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:13px;user-select:none;transition:background var(--tr)}.adm-help-title:hover{background:var(--g2)}.adm-help-title.open{background:var(--red-soft)}.adm-help-content{display:none;padding:16px;font-size:13px;line-height:1.7;color:var(--black)}.adm-help-item.open .adm-help-content{display:block}.adm-help-toggle{font-size:18px;transition:transform var(--tr)}.adm-help-item.open .adm-help-toggle{transform:rotate(180deg)}.adm-help-content h4{margin:12px 0 8px;font-size:13px;font-weight:700;color:var(--red)}.adm-help-content p{margin:0 0 12px;color:var(--g4)}.adm-help-content ul{margin:8px 0 12px;padding-left:20px;color:var(--g4)}.adm-help-content li{margin:4px 0}</style>
+
+      <!-- Производство -->
+      <div class="adm-help-item">
+        <div class="adm-help-title" onclick="this.closest('.adm-help-item').classList.toggle('open')">
+          <span>💧 Производство (₽ / единица)</span>
+          <span class="adm-help-toggle">▼</span>
+        </div>
+        <div class="adm-help-content">
+          <h4>О чем этот блок?</h4>
+          <p>Здесь устанавливаются стоимости основных производственных процессов. Каждое значение — это цена за одну единицу продукта (за 1 штуку).</p>
+          <h4>Как это влияет на расчёт?</h4>
+          <ul>
+            <li><strong>Фасовка (жидкая/кремовая/сухая)</strong> — добавляется в смету как отдельная строка "Фасовка и укупорка"</li>
+            <li><strong>Маркировка</strong> — печать даты и номера партии на каждую единицу товара</li>
+            <li><strong>Индивидуальная разработка рецептуры</strong> — это <u>разовая стоимость</u> за весь заказ, потом делится на количество товара</li>
+          </ul>
+          <h4>Примеры значений</h4>
+          <ul>
+            <li>Фасовка жидкая: 5-6 ₽/шт</li>
+            <li>Фасовка кремовая: 8-9 ₽/шт (дороже, так как нужна специальная линия)</li>
+            <li>Маркировка: 0.5-1.5 ₽/шт</li>
+            <li>Разработка рецептуры: 80,000-150,000 ₽ (за весь заказ, не зависит от объёма)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Этикетирование -->
+      <div class="adm-help-item">
+        <div class="adm-help-title" onclick="this.closest('.adm-help-item').classList.toggle('open')">
+          <span>🏷️ Этикетирование (₽ / единица)</span>
+          <span class="adm-help-toggle">▼</span>
+        </div>
+        <div class="adm-help-content">
+          <h4>О чем этот блок?</h4>
+          <p>Стоимость наклеивания этикеток на флаконы. Зависит от типа оборудования и сложности формы флакона.</p>
+          <h4>Три варианта этикетирования</h4>
+          <ul>
+            <li><strong>Машинная (1 этикетка)</strong> — автоматическое наклеивание на круглые флаконы (самый дешёвый вариант)</li>
+            <li><strong>Ручная (1 этикетка)</strong> — руками на фигурные или сложные формы</li>
+            <li><strong>Ручная (2 этикетки)</strong> — две этикетки на одну единицу (дороже)</li>
+          </ul>
+          <h4>Влияние на смету</h4>
+          <p>Выбранный вариант автоматически добавляется в строку "Этикетирование" с соответствующей ценой.</p>
+          <h4>Примеры цен</h4>
+          <ul>
+            <li>Машинная: 1-1.5 ₽/шт</li>
+            <li>Ручная 1 этикетка: 3-4 ₽/шт</li>
+            <li>Ручная 2 этикетки: 5-7 ₽/шт</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Документы и маркировка ЧЗ -->
+      <div class="adm-help-item">
+        <div class="adm-help-title" onclick="this.closest('.adm-help-item').classList.toggle('open')">
+          <span>📋 Документы и маркировка ЧЗ (₽ / единица)</span>
+          <span class="adm-help-toggle">▼</span>
+        </div>
+        <div class="adm-help-content">
+          <h4>О чем этот блок?</h4>
+          <p>Расходы на регистрацию товара, штрих-коды, маркировку "Честный знак" и регистрационные документы.</p>
+          <h4>Каждое поле в деталях</h4>
+          <ul>
+            <li><strong>Честный знак — ввод в оборот</strong> — регистрация товара в системе ЧЗ (₽/шт)</li>
+            <li><strong>Маркировка ЧЗ</strong> — печать кода ЧЗ на этикетку (₽/шт)</li>
+            <li><strong>Декларация соответствия</strong> — документ на 5 лет, <u>делится на количество товара</u> (₽/шт). Пример: 28,000 ₽ за партию 1000 шт = 28 ₽/шт</li>
+            <li><strong>СГР (дет. линейка)</strong> — Свидетельство о регистрации для детских товаров, <u>делится на количество</u> (₽/шт)</li>
+            <li><strong>GTIN</strong> — штрих-код GS1, <u>делится на количество</u> (₽/шт). Пример: 10,000 ₽ за партию = 10 ₽/шт</li>
+          </ul>
+          <h4>Важно помнить</h4>
+          <p>⚠️ Некоторые поля (Декларация, СГР, GTIN) — это <u>разовые стоимости за весь заказ</u>, которые потом автоматически делятся на количество товара. Это нормально!</p>
+          <h4>Примеры</h4>
+          <ul>
+            <li>Честный знак ввод: 5-10 ₽/шт</li>
+            <li>Маркировка ЧЗ: 2-3 ₽/шт</li>
+            <li>Декларация: 28,000 ₽ за партию (≈ 28 ₽/шт при 1000 шт)</li>
+            <li>СГР (для детей): 50,000 ₽ за партию (≈ 50 ₽/шт при 1000 шт)</li>
+            <li>GTIN: 10,000 ₽ за партию (≈ 10 ₽/шт при 1000 шт)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Регистрационные документы по категориям -->
+      <div class="adm-help-item">
+        <div class="adm-help-title" onclick="this.closest('.adm-help-item').classList.toggle('open')">
+          <span>🏷️ Регистрационные документы по категориям</span>
+          <span class="adm-help-toggle">▼</span>
+        </div>
+        <div class="adm-help-content">
+          <h4>О чем этот блок?</h4>
+          <p>Для каждой категории товара выбирается, какой регистрационный документ требуется: ДС (Декларация соответствия) или СГР (Свидетельство о государственной регистрации).</p>
+          <h4>В чём разница?</h4>
+          <ul>
+            <li><strong>ДС (Декларация соответствия)</strong> — быстрее и дешевле (28,000 ₽), действует 5 лет</li>
+            <li><strong>СГР (Свидетельство о регистрации)</strong> — дороже (50,000 ₽), но требуется для детских товаров и некоторых других категорий</li>
+          </ul>
+          <h4>Как использовать</h4>
+          <p>Выберите для каждой категории (Косметика, Дети, Для дома и т.д.) нужный тип документа из выпадающего списка.</p>
+          <h4>Примечание</h4>
+          <p>Выбранный документ автоматически появится в смете клиента под соответствующим названием (либо "ДС", либо "СГР").</p>
+        </div>
+      </div>
+
+      <!-- Упаковка и отгрузка -->
+      <div class="adm-help-item">
+        <div class="adm-help-title" onclick="this.closest('.adm-help-item').classList.toggle('open')">
+          <span>📦 Упаковка и отгрузка (₽ / единица)</span>
+          <span class="adm-help-toggle">▼</span>
+        </div>
+        <div class="adm-help-content">
+          <h4>О чем этот блок?</h4>
+          <p>Стоимость упаковки товара перед отправкой клиенту. Включает как первичную упаковку (короба), так и подготовку к доставке.</p>
+          <h4>Каждое поле</h4>
+          <ul>
+            <li><strong>Упаковка индивидуальная (маркетплейсы)</strong> — защитная плёнка + коробка + маркировка (₽/шт)</li>
+            <li><strong>Упаковка групповая</strong> — гофрокороб без доп. упаковки (₽/шт)</li>
+            <li><strong>Укладка в транспортные короба</strong> — включает стоимость самого короба</li>
+            <li><strong>Подбор тарного короба</strong> — выбор оптимального размера короба</li>
+            <li><strong>Паллетирование</strong> — укладка на паллеты и целлофанирование</li>
+            <li><strong>Погрузо-разгрузочные работы</strong> — подготовка к отправке</li>
+          </ul>
+          <h4>Примеры</h4>
+          <ul>
+            <li>Индивидуальная упаковка: 10 ₽/шт</li>
+            <li>Групповая упаковка: 3 ₽/шт</li>
+            <li>Укладка + подбор: 6-7 ₽/шт</li>
+            <li>Паллетирование: 0.9-1.2 ₽/шт</li>
+            <li>Погрузка: 1-1.5 ₽/шт</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Доставка -->
+      <div class="adm-help-item">
+        <div class="adm-help-title" onclick="this.closest('.adm-help-item').classList.toggle('open')">
+          <span>🚚 Доставка (₽ за рейс)</span>
+          <span class="adm-help-toggle">▼</span>
+        </div>
+        <div class="adm-help-content">
+          <h4>О чем этот блок?</h4>
+          <p>Стоимость доставки товара до клиента. Введите стоимость одного полного рейса (до 16 паллет) для каждого города.</p>
+          <h4>Как рассчитывается стоимость для клиента?</h4>
+          <p>Стоимость рейса <u>автоматически делится на количество товара</u> клиента. Система считает, сколько паллет нужно для его заказа, и рассчитывает справедливую долю.</p>
+          <h4>Пример</h4>
+          <ul>
+            <li>Рейс в Москву стоит 40,000 ₽</li>
+            <li>Клиент заказывает 1000 шт по 300 мл = нужно ~2 паллеты из 16 возможных</li>
+            <li>Доставка для клиента: 40,000 ÷ 1000 ≈ 40 ₽/шт</li>
+          </ul>
+          <h4>Города</h4>
+          <p>Установите цены рейса для: Москва/МО, Тула/Орёл, Курск, МКАД. Клиент выбирает свой город, и автоматически рассчитывается его доставка.</p>
+        </div>
+      </div>
+
+      <!-- Цены тары -->
+      <div class="adm-help-item">
+        <div class="adm-help-title" onclick="this.closest('.adm-help-item').classList.toggle('open')">
+          <span>🧴 Цены тары по объёмам</span>
+          <span class="adm-help-toggle">▼</span>
+        </div>
+        <div class="adm-help-content">
+          <h4>О чем этот блок?</h4>
+          <p>Здесь хранятся цены флаконов, туб и других упаковок для каждого объёма (50 мл, 100 мл, 300 мл и т.д.).</p>
+          <h4>Когда используется?</h4>
+          <p>Если клиент выбрал "Предоставляет поставщик" (то есть мы закупаем тару), система добавляет эту цену в смету в строку "Тара".</p>
+          <h4>Как добавить новый объём?</h4>
+          <ol style="padding-left:20px;margin:8px 0 12px">
+            <li>Нажмите кнопку "+ Добавить объём"</li>
+            <li>Введите объём в литрах (например, 0.25 для 250 мл)</li>
+            <li>Введите цену одного флакона этого объёма</li>
+          </ol>
+          <h4>Примеры</h4>
+          <ul>
+            <li>50 мл: 2-3 ₽</li>
+            <li>100 мл: 3-4 ₽</li>
+            <li>300 мл: 7-10 ₽</li>
+            <li>500 мл: 10-15 ₽</li>
+            <li>1 л: 18-25 ₽</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="adm-help-item">
+        <div class="adm-help-title" onclick="this.closest('.adm-help-item').classList.toggle('open')">
+          <span>📧 Email уведомления</span>
+          <span class="adm-help-toggle">▼</span>
+        </div>
+        <div class="adm-help-content">
+          <h4>О чем этот блок?</h4>
+          <p>Настройка отправки расчётов клиентов на электронную почту. Когда клиент заполнит форму и нажмёт "Сохранить расчет", расчёт отправится ему и вам.</p>
+          <h4>Поля для заполнения</h4>
+          <ul>
+            <li><strong>Email менеджера</strong> — ваш email для копий расчётов (обязательно!)</li>
+            <li><strong>Способ отправки</strong> — как отправлять письма:
+              <ul style="margin-top:4px;padding-left:20px">
+                <li><strong>Formspree</strong> — бесплатный сервис, нужна форма на сайте Formspree</li>
+                <li><strong>EmailJS</strong> — требует API ключа</li>
+                <li><strong>Свой бэкенд</strong> — отправка на ваш сервер</li>
+                <li><strong>Отключено</strong> — отправка не работает</li>
+              </ul>
+            </li>
+            <li><strong>API ключ/URL</strong> — ключ для выбранного способа отправки</li>
+            <li><strong>Текст в письме клиенту</strong> — добавляется после расчёта (спасибо, контакты и т.д.)</li>
+          </ul>
+          <h4>Что клиент получит?</h4>
+          <p>Email с расчётом (цена за единицу, общая стоимость) + данные его заказа + текст, который вы здесь напишете.</p>
+        </div>
+      </div>
+
+      <!-- Тексты -->
+      <div class="adm-help-item">
+        <div class="adm-help-title" onclick="this.closest('.adm-help-item').classList.toggle('open')">
+          <span>✏️ Тексты и заголовки интерфейса</span>
+          <span class="adm-help-toggle">▼</span>
+        </div>
+        <div class="adm-help-content">
+          <h4>О чем этот блок?</h4>
+          <p>Здесь вы можете изменить любой текст, заголовок и подсказку на главной странице калькулятора для клиентов.</p>
+          <h4>Группы текстов</h4>
+          <ul>
+            <li><strong>Заголовки и подзаголовки</strong> — главный заголовок, описание и т.д.</li>
+            <li><strong>Метки полей</strong> — подписи для объёма, количества, города</li>
+            <li><strong>Справки (в окне "?") </strong> — длинные инструкции для клиента при клике на "?"</li>
+            <li><strong>Тексты кнопок</strong> — названия кнопок выбора (Машинная, Ручная и т.д.)</li>
+            <li><strong>Email форма</strong> — заголовок и подсказки в форме отправки расчета</li>
+          </ul>
+          <h4>Важно</h4>
+          <p>Вы можете использовать HTML теги для форматирования: <code>&lt;strong&gt;жирный&lt;/strong&gt;</code>, <code>&lt;em&gt;курсив&lt;/em&gt;</code> и т.д.</p>
+          <h4>Пример</h4>
+          <p>Введите: <code>Это &lt;strong&gt;важный&lt;/strong&gt; текст</code></p>
+          <p>Клиент увидит: Это <strong>важный</strong> текст</p>
+        </div>
+      </div>
+
+      <!-- Товары -->
+      <div class="adm-help-item">
+        <div class="adm-help-title" onclick="this.closest('.adm-help-item').classList.toggle('open')">
+          <span>🧼 Товары по категориям</span>
+          <span class="adm-help-toggle">▼</span>
+        </div>
+        <div class="adm-help-content">
+          <h4>О чем этот блок?</h4>
+          <p>Управление товарами в каталоге. Для каждой категории (Косметика, Дети, Для дома и т.д.) вы видите таблицу товаров с ценами.</p>
+          <h4>Как изменить цены?</h4>
+          <ol style="padding-left:20px;margin:8px 0 12px">
+            <li>Найдите товар в таблице</li>
+            <li>Отредактируйте цены для разных объёмов партии (от 500, 1000, 2000, 5000 шт)</li>
+            <li>Нажмите "Сохранить цены"</li>
+          </ol>
+          <h4>Включить/отключить товар</h4>
+          <p>В последней колонке таблицы есть переключатель. Если отключить — товар не будет видим клиентам в списке выбора.</p>
+          <h4>Добавить новый товар</h4>
+          <ol style="padding-left:20px;margin:8px 0 12px">
+            <li>Нажмите "+ Добавить товар"</li>
+            <li>Заполните: подкатегория, название, тип ценообразования (₽/л или прямая цена/шт), тип фасовки</li>
+            <li>Введите цены для разных объёмов партии</li>
+            <li>Нажмите "Сохранить"</li>
+          </ol>
+          <h4>Типы ценообразования</h4>
+          <ul>
+            <li><strong>₽ / литр</strong> — цена зависит от объёма (300 мл × 50 ₽/л = 15 ₽/шт)</li>
+            <li><strong>Прямая цена / ед.</strong> — фиксированная цена за штуку, независимо от объёма</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TEXTS PANEL -->
+    <div class="adm-panel" id="ap-txt">
+      <div class="svc-sec">Заголовки и тексты интерфейса <span class="info-tip" data-tip="Измените любой текст на главной странице калькулятора. Поддерживает HTML теги">?</span></div>
+      <div class="txt-grid">
+        <div class="txt-fld"><label>Бейдж в шапке (hero badge)</label><input type="text" id="te-badge"></div>
+        <div class="txt-fld"><label>Главный заголовок</label><input type="text" id="te-h1"></div>
+        <div class="txt-fld"><label>Подзаголовок hero</label><textarea id="te-p" rows="2"></textarea></div>
+        <div class="txt-fld"><label>Заголовок шага 1</label><input type="text" id="te-s1h"></div>
+        <div class="txt-fld"><label>Подпись шага 1</label><input type="text" id="te-s1s"></div>
+        <div class="txt-fld"><label>Метка типа продукта</label><input type="text" id="te-type"></div>
+        <div class="txt-fld"><label>Заголовок шага 2</label><input type="text" id="te-s2h"></div>
+        <div class="txt-fld"><label>Подпись шага 2</label><input type="text" id="te-s2s"></div>
+        <div class="txt-fld"><label>Текст уведомления (notice)</label><textarea id="te-notice" rows="2"></textarea></div>
+        <div class="txt-fld"><label>Метка «Объём тары»</label><input type="text" id="te-lbl-vol"></div>
+        <div class="txt-fld"><label>Метка «Количество штук»</label><input type="text" id="te-lbl-qty"></div>
+        <div class="txt-fld"><label>Метка «Город доставки»</label><input type="text" id="te-lbl-city"></div>
+        <div class="txt-fld"><label>Заголовок блока «Тара»</label><input type="text" id="te-tare-h"></div>
+        <div class="txt-fld"><label>Подсказка блока «Тара»</label><input type="text" id="te-tare-hint"></div>
+        <div class="txt-fld"><label>Справка «Тара и укупорка» (в окне ?)</label><textarea id="te-tare-info" rows="3" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--white);resize:vertical;"></textarea></div>
+        <div class="txt-fld"><label>Кнопка «Закупаем мы»</label><input type="text" id="te-tare-us"></div>
+        <div class="txt-fld"><label>Кнопка «Предоставляет клиент»</label><input type="text" id="te-tare-cl"></div>
+        <div class="txt-fld"><label>Заголовок блока «Этикетирование»</label><input type="text" id="te-lbl-h"></div>
+        <div class="txt-fld"><label>Подсказка блока «Этикетирование»</label><input type="text" id="te-lbl-hint"></div>
+        <div class="txt-fld"><label>Справка «Способ этикетирования» (в окне ?)</label><textarea id="te-lbl-info" rows="3" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--white);resize:vertical;"></textarea></div>
+        <div class="txt-fld"><label>Кнопка «Машинная»</label><input type="text" id="te-lbl-auto"></div>
+        <div class="txt-fld"><label>Кнопка «Ручная 1 эт.»</label><input type="text" id="te-lbl-m1"></div>
+        <div class="txt-fld"><label>Кнопка «Ручная 2 эт.»</label><input type="text" id="te-lbl-m2"></div>
+        <div class="txt-fld"><label>Заголовок блока «Рецептура»</label><input type="text" id="te-recipe-h"></div>
+        <div class="txt-fld"><label>Подсказка блока «Рецептура»</label><input type="text" id="te-recipe-hint"></div>
+        <div class="txt-fld"><label>Справка «Рецептура» (в окне ?)</label><textarea id="te-recipe-info" rows="4" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--white);resize:vertical;"></textarea></div>
+        <div class="txt-fld"><label>Кнопка «Стандартная рецептура»</label><input type="text" id="te-recipe-standard"></div>
+        <div class="txt-fld"><label>Кнопка «Индивидуальная разработка»</label><input type="text" id="te-recipe-custom"></div>
+        <div class="txt-fld"><label>Заголовок блока «Упаковка и маркировка»</label><input type="text" id="te-package-h"></div>
+        <div class="txt-fld"><label>Подсказка блока «Упаковка»</label><input type="text" id="te-package-hint"></div>
+        <div class="txt-fld"><label>Справка «Упаковка и маркировка» (в окне ?)</label><textarea id="te-package-info" rows="4" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--white);resize:vertical;"></textarea></div>
+        <div class="txt-fld"><label>Кнопка «Индивидуальная упаковка»</label><input type="text" id="te-package-individual"></div>
+        <div class="txt-fld"><label>Кнопка «Групповая упаковка»</label><input type="text" id="te-package-group"></div>
+        <div class="txt-fld"><label>Заголовок блока «Дизайн упаковки»</label><input type="text" id="te-design-h"></div>
+        <div class="txt-fld"><label>Подсказка блока «Дизайн»</label><input type="text" id="te-design-hint"></div>
+        <div class="txt-fld"><label>Справка «Дизайн упаковки» (в окне ?)</label><textarea id="te-design-info" rows="3" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:var(--white);resize:vertical;"></textarea></div>
+        <div class="txt-fld"><label>Кнопка «Не нужен»</label><input type="text" id="te-design-none"></div>
+        <div class="txt-fld"><label>Кнопка «Базовый»</label><input type="text" id="te-design-basic"></div>
+        <div class="txt-fld"><label>Кнопка «Полный пакет»</label><input type="text" id="te-design-full"></div>
+        <div class="txt-fld"><label>Заголовок блока «Email»</label><input type="text" id="te-email-h"></div>
+        <div class="txt-fld"><label>Подсказка блока «Email»</label><input type="text" id="te-email-hint"></div>
+        <div class="txt-fld"><label>Метка «Ваше имя»</label><input type="text" id="te-email-name-lbl"></div>
+        <div class="txt-fld"><label>Метка «Телефон»</label><input type="text" id="te-email-phone-lbl"></div>
+        <div class="txt-fld"><label>Метка «Email»</label><input type="text" id="te-email-email-lbl"></div>
+        <div class="txt-fld"><label>Текст согласия на обработку данных</label><input type="text" id="te-email-consent"></div>
+        <div class="txt-fld"><label>Заголовок колонки «Статья расходов»</label><input type="text" id="te-col1"></div>
+        <div class="txt-fld"><label>Заголовок колонки «₽ / ед.»</label><input type="text" id="te-col2"></div>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveTxts()">💾 Сохранить тексты</button>
+        <div class="save-ok" id="txt-ok">✓ Сохранено</div>
+      </div>
+    </div>
+
+    <!-- PRODUCT PANELS -->
+    <div class="adm-panel" id="ap-cosm">
+      <input class="prod-search" placeholder="🔍 Поиск по названию..." oninput="filterProd('cosm',this.value)">
+      <div class="table-wrap"><table class="prod-table" id="pt-cosm">
+        <thead><tr>
+          <th>Продукт</th>
+          <th>от 500 шт</th><th>от 1 000 шт</th><th>от 2 000 шт</th><th>от 5 000 шт</th>
+          <th>Активен</th>
+        </tr></thead>
+        <tbody id="pb-cosm"></tbody>
+      </table></div>
+      <button class="add-prod-btn" onclick="toggleAddForm('cosm')">＋ Добавить товар</button>
+      <div class="add-prod-form" id="apf-cosm">
+        <div class="txt-grid">
+          <div><label>Подкатегория</label><input type="text" id="apf-cosm-sub" placeholder="Волосы, Тело, Лицо..."></div>
+          <div><label>Название товара</label><input type="text" id="apf-cosm-name" placeholder="Мой товар"></div>
+          <div><label>Тип ценообразования</label><select id="apf-cosm-direct"><option value="false">₽ / литр</option><option value="true">Прямая цена / ед.</option></select></div>
+          <div><label>Тип фасовки</label><select id="apf-cosm-cons"><option value="liq">Жидкая</option><option value="crm">Кремовая</option><option value="dry">Сухая / Скраб</option></select></div>
+        </div>
+        <label style="display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g3);margin-bottom:6px">Цены (от 500 / 1000 / 2000 / 5000 шт.)</label>
+        <div class="add-prod-prices">
+          <input type="number" id="apf-cosm-p0" step="0.01" placeholder="от 500">
+          <input type="number" id="apf-cosm-p1" step="0.01" placeholder="от 1000">
+          <input type="number" id="apf-cosm-p2" step="0.01" placeholder="от 2000">
+          <input type="number" id="apf-cosm-p3" step="0.01" placeholder="от 5000">
+        </div>
+        <div class="add-prod-form-actions" style="margin-top:10px">
+          <button class="add-prod-save" onclick="submitAddProd('cosm')">Сохранить</button>
+          <button class="add-prod-cancel" onclick="toggleAddForm('cosm')">Отмена</button>
+        </div>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveCat('cosm')">💾 Сохранить цены</button>
+        <div class="save-ok" id="cosm-ok">✓ Сохранено</div>
+      </div>
+    </div>
+    <div class="adm-panel" id="ap-kids">
+      <input class="prod-search" placeholder="🔍 Поиск по названию..." oninput="filterProd('kids',this.value)">
+      <div class="table-wrap"><table class="prod-table" id="pt-kids">
+        <thead><tr>
+          <th>Продукт</th>
+          <th>от 500 шт</th><th>от 1 000 шт</th><th>от 2 000 шт</th><th>от 5 000 шт</th>
+          <th>Активен</th>
+        </tr></thead>
+        <tbody id="pb-kids"></tbody>
+      </table></div>
+      <button class="add-prod-btn" onclick="toggleAddForm('kids')">＋ Добавить товар</button>
+      <div class="add-prod-form" id="apf-kids">
+        <div class="txt-grid">
+          <div><label>Подкатегория</label><input type="text" id="apf-kids-sub" placeholder="Уход 0+, Мытьё 0+..."></div>
+          <div><label>Название товара</label><input type="text" id="apf-kids-name" placeholder="Мой товар"></div>
+          <div><label>Тип ценообразования</label><select id="apf-kids-direct"><option value="false">₽ / литр</option><option value="true">Прямая цена / ед.</option></select></div>
+          <div><label>Тип фасовки</label><select id="apf-kids-cons"><option value="liq">Жидкая</option><option value="crm">Кремовая</option><option value="dry">Сухая / Скраб</option></select></div>
+        </div>
+        <label style="display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g3);margin-bottom:6px">Цены (от 500 / 1000 / 2000 / 5000 шт.)</label>
+        <div class="add-prod-prices">
+          <input type="number" id="apf-kids-p0" step="0.01" placeholder="от 500">
+          <input type="number" id="apf-kids-p1" step="0.01" placeholder="от 1000">
+          <input type="number" id="apf-kids-p2" step="0.01" placeholder="от 2000">
+          <input type="number" id="apf-kids-p3" step="0.01" placeholder="от 5000">
+        </div>
+        <div class="add-prod-form-actions" style="margin-top:10px">
+          <button class="add-prod-save" onclick="submitAddProd('kids')">Сохранить</button>
+          <button class="add-prod-cancel" onclick="toggleAddForm('kids')">Отмена</button>
+        </div>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveCat('kids')">💾 Сохранить цены</button>
+        <div class="save-ok" id="kids-ok">✓ Сохранено</div>
+      </div>
+    </div>
+    <div class="adm-panel" id="ap-home">
+      <input class="prod-search" placeholder="🔍 Поиск по названию..." oninput="filterProd('home',this.value)">
+      <div class="table-wrap"><table class="prod-table" id="pt-home">
+        <thead><tr>
+          <th>Продукт</th>
+          <th>от 500 шт</th><th>от 1 000 шт</th><th>от 2 000 шт</th><th>от 5 000 шт</th>
+          <th>Активен</th>
+        </tr></thead>
+        <tbody id="pb-home"></tbody>
+      </table></div>
+      <button class="add-prod-btn" onclick="toggleAddForm('home')">＋ Добавить товар</button>
+      <div class="add-prod-form" id="apf-home">
+        <div class="txt-grid">
+          <div><label>Подкатегория</label><input type="text" id="apf-home-sub" placeholder="Ароматы..."></div>
+          <div><label>Название товара</label><input type="text" id="apf-home-name" placeholder="Мой товар"></div>
+          <div><label>Тип ценообразования</label><select id="apf-home-direct"><option value="false">₽ / литр</option><option value="true">Прямая цена / ед.</option></select></div>
+          <div><label>Тип фасовки</label><select id="apf-home-cons"><option value="liq">Жидкая</option><option value="crm">Кремовая</option><option value="dry">Сухая / Скраб</option></select></div>
+        </div>
+        <label style="display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g3);margin-bottom:6px">Цены (от 500 / 1000 / 2000 / 5000 шт.)</label>
+        <div class="add-prod-prices">
+          <input type="number" id="apf-home-p0" step="0.01" placeholder="от 500">
+          <input type="number" id="apf-home-p1" step="0.01" placeholder="от 1000">
+          <input type="number" id="apf-home-p2" step="0.01" placeholder="от 2000">
+          <input type="number" id="apf-home-p3" step="0.01" placeholder="от 5000">
+        </div>
+        <div class="add-prod-form-actions" style="margin-top:10px">
+          <button class="add-prod-save" onclick="submitAddProd('home')">Сохранить</button>
+          <button class="add-prod-cancel" onclick="toggleAddForm('home')">Отмена</button>
+        </div>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveCat('home')">💾 Сохранить цены</button>
+        <div class="save-ok" id="home-ok">✓ Сохранено</div>
+      </div>
+    </div>
+    <div class="adm-panel" id="ap-chem">
+      <input class="prod-search" placeholder="🔍 Поиск по названию..." oninput="filterProd('chem',this.value)">
+      <div class="table-wrap"><table class="prod-table" id="pt-chem">
+        <thead><tr>
+          <th>Продукт</th>
+          <th>от 500 шт</th><th>от 1 000 шт</th><th>от 2 000 шт</th><th>от 5 000 шт</th>
+          <th>Активен</th>
+        </tr></thead>
+        <tbody id="pb-chem"></tbody>
+      </table></div>
+      <button class="add-prod-btn" onclick="toggleAddForm('chem')">＋ Добавить товар</button>
+      <div class="add-prod-form" id="apf-chem">
+        <div class="txt-grid">
+          <div><label>Подкатегория</label><input type="text" id="apf-chem-sub" placeholder="Стирка, Уборка..."></div>
+          <div><label>Название товара</label><input type="text" id="apf-chem-name" placeholder="Мой товар"></div>
+          <div><label>Тип ценообразования</label><select id="apf-chem-direct"><option value="false">₽ / литр</option><option value="true">Прямая цена / ед.</option></select></div>
+          <div><label>Тип фасовки</label><select id="apf-chem-cons"><option value="liq">Жидкая</option><option value="crm">Кремовая</option><option value="dry">Сухая / Скраб</option></select></div>
+        </div>
+        <label style="display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g3);margin-bottom:6px">Цены (от 500 / 1000 / 2000 / 5000 шт.)</label>
+        <div class="add-prod-prices">
+          <input type="number" id="apf-chem-p0" step="0.01" placeholder="от 500">
+          <input type="number" id="apf-chem-p1" step="0.01" placeholder="от 1000">
+          <input type="number" id="apf-chem-p2" step="0.01" placeholder="от 2000">
+          <input type="number" id="apf-chem-p3" step="0.01" placeholder="от 5000">
+        </div>
+        <div class="add-prod-form-actions" style="margin-top:10px">
+          <button class="add-prod-save" onclick="submitAddProd('chem')">Сохранить</button>
+          <button class="add-prod-cancel" onclick="toggleAddForm('chem')">Отмена</button>
+        </div>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveCat('chem')">💾 Сохранить цены</button>
+        <div class="save-ok" id="chem-ok">✓ Сохранено</div>
+      </div>
+    </div>
+    <div class="adm-panel" id="ap-pets">
+      <input class="prod-search" placeholder="🔍 Поиск по названию..." oninput="filterProd('pets',this.value)">
+      <div class="table-wrap"><table class="prod-table" id="pt-pets">
+        <thead><tr>
+          <th>Продукт</th>
+          <th>от 500 шт</th><th>от 1 000 шт</th><th>от 2 000 шт</th><th>от 5 000 шт</th>
+          <th>Активен</th>
+        </tr></thead>
+        <tbody id="pb-pets"></tbody>
+      </table></div>
+      <button class="add-prod-btn" onclick="toggleAddForm('pets')">＋ Добавить товар</button>
+      <div class="add-prod-form" id="apf-pets">
+        <div class="txt-grid">
+          <div><label>Подкатегория</label><input type="text" id="apf-pets-sub" placeholder="Уход, Чистота..."></div>
+          <div><label>Название товара</label><input type="text" id="apf-pets-name" placeholder="Мой товар"></div>
+          <div><label>Тип ценообразования</label><select id="apf-pets-direct"><option value="false">₽ / литр</option><option value="true">Прямая цена / ед.</option></select></div>
+          <div><label>Тип фасовки</label><select id="apf-pets-cons"><option value="liq">Жидкая</option><option value="crm">Кремовая</option><option value="dry">Сухая / Скраб</option></select></div>
+        </div>
+        <label style="display:block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--g3);margin-bottom:6px">Цены (от 500 / 1000 / 2000 / 5000 шт.)</label>
+        <div class="add-prod-prices">
+          <input type="number" id="apf-pets-p0" step="0.01" placeholder="от 500">
+          <input type="number" id="apf-pets-p1" step="0.01" placeholder="от 1000">
+          <input type="number" id="apf-pets-p2" step="0.01" placeholder="от 2000">
+          <input type="number" id="apf-pets-p3" step="0.01" placeholder="от 5000">
+        </div>
+        <div class="add-prod-form-actions" style="margin-top:10px">
+          <button class="add-prod-save" onclick="submitAddProd('pets')">Сохранить</button>
+          <button class="add-prod-cancel" onclick="toggleAddForm('pets')">Отмена</button>
+        </div>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveCat('pets')">💾 Сохранить цены</button>
+        <div class="save-ok" id="pets-ok">✓ Сохранено</div>
+      </div>
+    </div>
+
+    <!-- GITHUB PUBLISH PANEL -->
+    <div class="adm-panel" id="ap-pub">
+      <div class="svc-sec">⚡ Автоматическая публикация на GitHub</div>
+      <div style="background:#f9f9fb;border-radius:var(--r);padding:16px;margin-bottom:20px;border:1px solid var(--g2)">
+        <p style="font-size:13px;line-height:1.6;color:var(--black);margin:0">
+          Все изменения автоматически публикуются на GitHub Pages при каждом нажатии "Сохранить". 
+          Для этого необходимо один раз ввести GitHub Personal Access Token с правом "Contents: Read and write".
+        </p>
+      </div>
+      <div class="txt-grid">
+        <div class="txt-fld">
+          <label>GitHub Personal Access Token</label>
+          <input type="password" id="gh_token_input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="width:100%;padding:8px 10px;border:1.5px solid var(--g2);border-radius:var(--r-sm);font-size:13px;font-family:monospace;background:var(--white);">
+          <div style="font-size:11px;color:var(--g3);margin-top:6px">
+            <a href="https://github.com/settings/tokens?type=pat" target="_blank" style="color:var(--red);text-decoration:none">Создать токен на GitHub</a> (выбери "repo" → "Contents: Read and write")
+          </div>
+        </div>
+      </div>
+      <div class="save-bar">
+        <button class="save-btn" onclick="saveGhToken()">💾 Сохранить токен</button>
+        <button class="save-btn" onclick="testGhToken(document.getElementById('gh_token_input').value)" style="background:var(--g2);color:var(--black)">🔍 Проверить</button>
+        <div class="save-ok" id="pub-ok">✓ Сохранено</div>
+        <div class="save-ok" id="pub-test-ok" style="background:#90ee90">✓ Токен рабочий</div>
+        <div class="save-ok" id="pub-test-err" style="background:#ff6b6b">✗ Токен не рабочий</div>
+      </div>
+      <div style="background:#fff9e6;border-radius:var(--r);padding:16px;margin-top:20px;border:1px solid #ffe066">
+        <p style="font-size:12px;line-height:1.6;color:#333;margin:0">
+          <strong>⚠️ Безопасность:</strong> Токен хранится только в браузере (localStorage), не встраивается в код и не отправляется никому кроме GitHub API.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+const ADMIN_PWD = 'VDMK26';
+const EMBEDDED_SETTINGS = null;
+const GH_OWNER = 'alexshnmn';
+const GH_REPO = 'tilda-calc';
+const GH_FILE = 'calculator-unified.html';
+const GH_BRANCH = 'main';
+const SVC_DEF = {
+  liq:5.2,crm:8.2,dry:11.5,mark:0.9,
+  la:1.2,lm1:3.0,lm2:5.0,
+  chz:5.8,chzMark:2.5,decl:29000.0,sgr:50000.0,gtin:10000.0,
+  box:3.0,bsel:3.5,pal:0.95,load:1.19,
+  dmsc:40000,dkur:18000,dmkd:26500,
+  devCost:80000,tmReg:80000,
+  packIndividual:10,packGroup:3,
+  designBasic:0,designFull:0,
+  docTypeCosm:'decl',docTypeKids:'sgr',docTypeHome:'decl',docTypeChem:'decl',docTypePets:'decl',
+  tarePrices:{0.05:2,0.1:3,0.15:4,0.2:5,0.25:6,0.3:7,0.4:8,0.5:10,0.75:15,1.0:18,1.5:22,2.0:28,5.0:60}
+};
+function getSvc(){try{const emb=EMBEDDED_SETTINGS&&EMBEDDED_SETTINGS.svc||{};return{...SVC_DEF,...emb,...JSON.parse(localStorage.getItem('stm_svc')||'{}')};}catch(e){return{...SVC_DEF};}}
+const TXT_DEF = {
+  badge:'Калькулятор СТМ',
+  h1:'Стоимость вашего бренда —<br>за 2 минуты',
+  p:'Выберите продукт, объём и тираж. Система рассчитает полную стоимость производства с разбивкой по каждой статье.',
+  s1h:'1 · Категория и продукт',s1s:'Выберите категорию, тип продукта и конкретное наименование',
+  type:'Тип продукта (вид и назначение)',
+  s2h:'2 · Параметры заказа',s2s:'Укажите объём тары, количество и город доставки',
+  notice:'📌 Минимальный заказ — <strong>от 500 штук</strong>. Чем выше тираж, тем ниже цена единицы.',
+  'lbl-vol':'Объём тары','lbl-qty':'Количество штук','lbl-city':'Город доставки',
+  'tare-h':'Тара и укупорка','tare-hint':'Кто предоставляет упаковку?',
+  'tare-us':'Предоставляет поставщик','tare-cl':'Предоставляет клиент',
+  'lbl-h':'Способ этикетирования','lbl-hint':'Как клеится этикетка?',
+  'lbl-auto':'Машинная (1 этикетка)','lbl-m1':'Ручная (1 этикетка)','lbl-m2':'Ручная (2 этикетки)',
+  'lbl-info':'Машинная этикетировка происходит на циллиндрических флаконах (у которых круглое дно) в автоматическом режиме. Ручная этикетировка происходит на фигурных флаконах, таре со сложной геометрией, плоской таре (например, канистры) или упаковке с необычной формой.',
+  'recipe-h':'Рецептура','recipe-hint':'Стандартная или индивидуальная?',
+  'recipe-standard':'Стандартная рецептура (бесплатно)','recipe-custom':'Индивидуальная разработка',
+  'recipe-info':'В Стандартном каталоге рецептур есть разные варианты продуктов, отличающихся по качеству, концентрации активных компонентов, и себестоимости. Стандартные рецептуры не передаются заказчику и являются интеллектуальной собственностью поставщика. При разработке индивидуальной рецептуры, Поставщик передает саму рецептуру и технологическую карту в собственность Покупателя и не использует ее в своей работе для других заказчиков.',
+  'package-h':'Упаковка и маркировка','package-hint':'Вид упаковки для клиента',
+  'package-individual':'Индивидуальная, для маркетплейсов','package-group':'Групповая, без доп.упаковки',
+  'package-info':'Индивидуальная упаковка для маркетплейсов включает в себя, помимо упаковки самого товара, защитную пленку, индивидуальный короб, маркировку для идентификации продукта на складе маркетплейса. Групповая упаковка включает в себя дополнительный гофрокороб, в который складываются несколько товаров без индивидуальной упаковки (для дальнейшей работы с ними на складах, фулфилментах или розничных точках продаж).',
+  'trademark-h':'Товарный знак','trademark-hint':'Нужна ли регистрация товарного знака?',
+  'trademark-none':'Товарный знак уже есть','trademark-reg':'Нужна регистрация','trademark-self':'Буду регистрировать самостоятельно',
+  'trademark-info':'<strong>Товарный знак</strong> — это символ, который защищает ваш бренд от подделок и неправомерного использования. <strong>Товарный знак уже есть</strong> — если знак зарегистрирован. <strong>Нужна регистрация</strong> — мы помогаем зарегистрировать товарный знак в Роспатенте (стоимость 80 000 ₽). <strong>Буду регистрировать самостоятельно</strong> — если вы планируете зарегистрировать его сами.',
+  'design-h':'Дизайн упаковки','design-hint':'Разработка дизайна и подготовка макетов к печати',
+  'design-none':'Не нужен','design-basic':'Базовый','design-full':'Полный пакет',
+  'design-info':'<strong>Дизайн упаковки</strong> — это создание графического оформления для вашей тары (этикетка, наклейка и т.д.) и подготовка к печати. <strong>Не нужен</strong> — вы используете готовый дизайн или предоставляете макет самостоятельно. <strong>Базовый пакет</strong> — создание простого варианта дизайна. <strong>Полный пакет</strong> — полная разработка дизайна с множеством вариантов и итераций.',
+  'email-h':'Получить расчёт на почту','email-hint':'Заполните данные, чтобы получить детальный расчёт',
+  'email-name-lbl':'Ваше имя','email-phone-lbl':'Телефон','email-email-lbl':'Email',
+  'email-consent':'Я согласен на обработку персональных данных согласно политике конфиденциальности',
+  col1:'Статья расходов',col2:'₽ / ед.'
+};
+function getTxts(){try{const emb=EMBEDDED_SETTINGS&&EMBEDDED_SETTINGS.txt||{};return{...TXT_DEF,...emb,...JSON.parse(localStorage.getItem('stm_txt')||'{}')};}catch(e){return{...TXT_DEF};}}
+function applyTxts(){
+  const t=getTxts();
+  const map={
+    'txt-badge':'badge','txt-hero-h1':'h1','txt-hero-p':'p',
+    'txt-s1h':'s1h','txt-s1s':'s1s','txt-type-label':'type',
+    'txt-s2h':'s2h','txt-s2s':'s2s','txt-notice':'notice',
+    'txt-lbl-vol':'lbl-vol','txt-lbl-qty':'lbl-qty','txt-lbl-city':'lbl-city',
+    'txt-tare-h':'tare-h','txt-tare-hint':'tare-hint',
+    'txt-tare-us':'tare-us','txt-tare-cl':'tare-cl',
+    'txt-lbl-h':'lbl-h','txt-lbl-hint':'lbl-hint',
+    'txt-lbl-auto':'lbl-auto','txt-lbl-m1':'lbl-m1','txt-lbl-m2':'lbl-m2',
+    'txt-recipe-h':'recipe-h','txt-recipe-hint':'recipe-hint',
+    'txt-recipe-standard':'recipe-standard','txt-recipe-custom':'recipe-custom',
+    'txt-package-h':'package-h','txt-package-hint':'package-hint',
+    'txt-package-individual':'package-individual','txt-package-group':'package-group',
+    'txt-design-h':'design-h','txt-design-hint':'design-hint',
+    'txt-design-none':'design-none','txt-design-basic':'design-basic','txt-design-full':'design-full',
+    'txt-email-h':'email-h','txt-email-hint':'email-hint',
+    'txt-email-name-lbl':'email-name-lbl','txt-email-phone-lbl':'email-phone-lbl','txt-email-email-lbl':'email-email-lbl',
+    'txt-email-consent':'email-consent',
+    'txt-col1':'col1','txt-col2':'col2'
+  };
+  Object.entries(map).forEach(([id,key])=>{
+    const el=document.getElementById(id);
+    if(el&&t[key]!==undefined) el.innerHTML=t[key];
+  });
+}
+const CATALOG_DEF = {cosm:[{sub:'Волосы',n:'Бальзам (премиум)',p:[625,562.5,506.25,387.28],cons:'liq'},{sub:'Волосы',n:'Бальзам (стандарт)',p:[323,290.7,261.63,200.15],cons:'liq'},{sub:'Волосы',n:'Бальзам (эконом)',p:[150,135,121.5,92.95],cons:'liq'},{sub:'Волосы',n:'Бальзам для кудрявых волос (КГМ)',p:[598,538.2,484.38,370.55],cons:'liq'},{sub:'Волосы',n:'Leave-in крем-спрей 15-в-1',p:[350,315,283.5,216.88],cons:'liq'},{sub:'Волосы',n:'Спрей для объёма волос',p:[160,144,129.6,99.14],cons:'liq'},{sub:'Волосы',n:'Спрей-кондиционер 15-в-1',p:[298,268.2,241.38,184.66],cons:'liq'},{sub:'Волосы',n:'Маска для волос увлажняющая',p:[640,576,518.4,396.58],cons:'crm'},{sub:'Волосы',n:'Маска для волос (КГМ)',p:[559,503.1,452.79,346.38],cons:'crm'},{sub:'Волосы',n:'Масло для волос-спрей (премиум)',p:[1976,1778.4,1600.56,1224.43],cons:'liq'},{sub:'Волосы',n:'Масло для волос-спрей (стандарт)',p:[1885,1696.5,1526.85,1168.04],cons:'liq'},{sub:'Волосы',n:'Пилинг для кожи головы',p:[460,414,372.6,285.04],cons:'crm'},{sub:'Волосы',n:'Сыворотка для кончиков волос',p:[1920,1728,1555.2,1189.73],cons:'liq'},{sub:'Волосы',n:'Шампунь (эконом)',p:[142,127.8,115.02,87.99],cons:'liq'},{sub:'Волосы',n:'Шампунь бессульфатный',p:[386,347.4,312.66,239.18],cons:'liq'},{sub:'Волосы',n:'Шампунь (стандарт)',p:[275,247.5,222.75,170.40],cons:'liq'},{sub:'Волосы',n:'Шампунь с кератином, окрашенные (прем.)',p:[440,396,356.4,272.65],cons:'liq'},{sub:'Волосы',n:'Шампунь с кератином, восстановление',p:[430,387,348.3,266.45],cons:'liq'},{sub:'Волосы',n:'Шампунь для кудрявых волос (КГМ)',p:[330,297,267.3,204.48],cons:'liq'},{sub:'Тело',n:'Гель для душа (премиум)',p:[440,396,356.4,272.65],cons:'liq'},{sub:'Тело',n:'Гель для душа (стандарт)',p:[285,256.5,230.85,176.60],cons:'liq'},{sub:'Тело',n:'Гель для душа (эконом)',p:[65,58.5,52.65,40.28],cons:'liq'},{sub:'Тело',n:'Гель для интимной гигиены',p:[315,283.5,255.15,195.19],cons:'liq'},{sub:'Тело',n:'Дезодорант шариковый на квасцах',p:[206,185.4,166.86,127.65],cons:'liq'},{sub:'Тело',n:'Жидкое мыло с вулканической пудрой',p:[787,708.3,637.47,487.66],cons:'liq'},{sub:'Тело',n:'Жидкое мыло (стандарт)',p:[245,220.5,198.45,151.81],cons:'liq'},{sub:'Тело',n:'Жидкое мыло (эконом)',p:[78,70.2,63.18,48.33],cons:'liq'},{sub:'Тело',n:'Лосьон для тела (премиум)',p:[378,340.2,306.18,234.23],cons:'crm'},{sub:'Тело',n:'Лосьон для тела (эконом)',p:[190,171,153.9,117.73],cons:'crm'},{sub:'Тело',n:'Мягкое мыло для бани',p:[380,342,307.8,235.47],cons:'liq'},{sub:'Тело',n:'Скраб сахарный',p:[595,535.5,481.95,368.69],cons:'dry'},{sub:'Тело',n:'Скраб солевой',p:[485,436.5,392.85,300.53],cons:'dry'},{sub:'Лицо',n:'Гель-патчи (стандарт)',p:[265,238.5,214.65,164.21],cons:'crm'},{sub:'Лицо',n:'Гель-патчи (премиум)',p:[510,459,413.1,334.61],cons:'crm'},{sub:'Лицо',n:'Гидрофильное масло (премиум)',p:[2630,2367,2130.3,1725.54],cons:'liq'},{sub:'Лицо',n:'Гидрофильное масло (стандарт)',p:[425,382.5,344.25,263.35],cons:'liq'},{sub:'Лицо',n:'Гидрофильное масло (эконом)',p:[285,256.5,230.85,186.99],cons:'liq'},{sub:'Лицо',n:'Крем увлажняющий (с ГК)',p:[600,540,486,393.66],cons:'crm'},{sub:'Лицо',n:'Крем против отёков',p:[752,676.8,609.12,465.98],cons:'crm'},{sub:'Лицо',n:'Крем питательный (масло ши)',p:[766,689.4,620.46,502.57],cons:'crm'},{sub:'Лицо',n:'Маска увлажняющая',p:[930,837,753.3,610.17],cons:'crm'},{sub:'Лицо',n:'Маска против прыщей',p:[427,384.3,345.87,264.59],cons:'crm'},{sub:'Лицо',n:'Массажное масло для лица',p:[3045,2740.5,2466.45,1997.82],cons:'liq'},{sub:'Лицо',n:'Мист увлажняющий',p:[260,234,210.6,170.59],cons:'liq'},{sub:'Лицо',n:'Мицеллярная вода',p:[230,207,186.3,142.52],cons:'liq'},{sub:'Лицо',n:'Мицеллярный мусс',p:[725,652.5,587.25,475.67],cons:'crm'},{sub:'Лицо',n:'Пенка для умывания увлажняющая',p:[490,441,396.9,303.63],cons:'liq'},{sub:'Лицо',n:'Пенка для умывания с аминокислотами',p:[460,414,372.6,301.81],cons:'liq'},{sub:'Лицо',n:'Тонер (премиум)',p:[438,394.2,354.78,271.41],cons:'liq'},{sub:'Лицо',n:'Тонер (стандарт)',p:[260,234,210.6,170.59],cons:'liq'},{sub:'Лицо',n:'Тонер (эконом)',p:[215,193.5,174.15,141.06],cons:'liq'},{sub:'Лицо',n:'Тоник омолаживающий с розовой водой',p:[190,171,153.9,117.73],cons:'liq'},{sub:'Лицо',n:'Тоник очищающий с кислотами',p:[180,162,145.8,118.10],cons:'liq'},{sub:'Лицо',n:'Тоник увлажняющий с ГК',p:[206,185.4,166.86,127.65],cons:'liq'},{sub:'Лицо',n:'Энзимная пудра (премиум)',p:[1681,1512.9,1361.61,1102.90],cons:'dry'},{sub:'Лицо',n:'Энзимная пудра (стандарт)',p:[1062,955.8,860.22,696.78],cons:'dry'},{sub:'Лицо',n:'Энзимная пудра (эконом)',p:[866,779.4,701.46,536.62],cons:'dry'}],kids:[{sub:'Уход 0+',n:'Крем детский под подгузник',p:[1700,1530,1377,1053.4],cons:'crm'},{sub:'Уход 0+',n:'Масло массажное детское',p:[2930,2637,2373.3,1815.57],cons:'crm'},{sub:'Мытьё 0+',n:'Мягкий гель для купания',p:[490,441,396.9,303.63],cons:'liq'},{sub:'Мытьё 0+',n:'Гель-шампунь для детей',p:[650,585,526.5,402.77],cons:'liq'},{sub:'Мытьё 0+',n:'Шампунь детский без слёз',p:[455,409.5,368.55,281.94],cons:'liq'},{sub:'Мытьё 3+',n:'Шампунь детский 3+ без слёз (эконом)',p:[225,202.5,182.25,139.42],cons:'liq'}],home:[{sub:'Ароматы',n:'Жидкость для диффузора (премиум)',p:[5620,5058,4552.2,3482.43],cons:'liq'},{sub:'Ароматы',n:'Жидкость для диффузора (стандарт)',p:[2810,2529,2276.1,1741.22],cons:'liq'},{sub:'Ароматы',n:'Жидкость для диффузора (эконом)',p:[1390,1251,1125.9,861.31],cons:'liq'},{sub:'Ароматы',n:'Спрей-ароматизатор (эконом)',p:[90,81,72.9,55.77],cons:'liq'},{sub:'Ароматы',n:'Спрей-ароматизатор (стандарт)',p:[103,92.7,83.43,63.82],cons:'liq'},{sub:'Ароматы',n:'Спрей-ароматизатор (премиум)',p:[125,112.5,101.25,77.46],cons:'liq'}],chem:[{sub:'Стирка',n:'Гель для стирки (эконом)',p:[78,70.2,63.18,48.33],cons:'liq'},{sub:'Стирка',n:'Гель для стирки (стандарт)',p:[135,121.5,109.35,83.65],cons:'liq'},{sub:'Стирка',n:'Гель для стирки белого белья (премиум)',p:[286,257.4,231.66,177.22],cons:'liq'},{sub:'Стирка',n:'Гель для стирки цветного белья (премиум)',p:[310,279,251.1,192.09],cons:'liq'},{sub:'Стирка',n:'Гель для стирки чёрного белья (премиум)',p:[299,269.1,242.19,185.28],cons:'liq'},{sub:'Стирка',n:'Кондиционер для белья (премиум)',p:[213,191.7,172.53,131.99],cons:'liq'},{sub:'Стирка',n:'Кондиционер для белья (эконом)',p:[62,55.8,50.22,38.42],cons:'liq'},{sub:'Стирка',n:'Пятновыводитель',p:[100,90,81,61.97],cons:'liq'},{sub:'Стирка',n:'Кислородный пятновыводитель',p:[299,269.1,242.19,185.28],cons:'dry'},{sub:'Стирка',n:'Спрей «жидкий утюг» (эконом)',p:[117,105.3,94.77,72.5],cons:'liq'},{sub:'Стирка',n:'Спрей «жидкий утюг» (стандарт)',p:[128,115.2,103.68,79.32],cons:'liq'},{sub:'Стирка',n:'Спрей «жидкий утюг» (премиум)',p:[141,126.9,114.21,87.37],cons:'liq'},{sub:'Уборка',n:'Антижир (премиум)',p:[170,153,137.7,105.34],cons:'liq'},{sub:'Уборка',n:'Антижир (эконом)',p:[62,55.8,50.22,38.42],cons:'liq'},{sub:'Уборка',n:'Антиналёт (премиум)',p:[266,239.4,215.46,164.83],cons:'liq'},{sub:'Уборка',n:'Антиналёт (стандарт)',p:[162,145.8,131.22,100.38],cons:'liq'},{sub:'Уборка',n:'Гель для мытья посуды (премиум)',p:[179,161.1,144.99,110.92],cons:'liq'},{sub:'Уборка',n:'Гель для мытья посуды (стандарт)',p:[122.5,110.25,99.23,75.91],cons:'liq'},{sub:'Уборка',n:'Гель для мытья посуды (эконом)',p:[53,47.7,42.93,32.84],cons:'liq'},{sub:'Уборка',n:'Концентрат для удаления накипи',p:[97,87.3,78.57,60.11],cons:'liq'},{sub:'Уборка',n:'Средство для мытья пола (премиум)',p:[63,56.7,51.03,39.04],cons:'liq'},{sub:'Уборка',n:'Средство для мытья пола (эконом)',p:[29,26.1,23.49,17.97],cons:'liq'},{sub:'Уборка',n:'Средство для мытья стёкол',p:[55,49.5,44.55,34.08],cons:'liq'},{sub:'Уборка',n:'Универсальное чистящее средство',p:[85,76.5,68.85,52.67],cons:'liq'},{sub:'Уборка',n:'Антисептический гель',p:[810,729,656.1,501.92],cons:'liq'}],pets:[{sub:'Уход',n:'Кондиционер от колтунов',p:[293.4,264.06,237.65,181.81],cons:'liq'},{sub:'Уход',n:'Спрей-кондиционер',p:[162.6,146.34,131.71,100.76],cons:'liq'},{sub:'Уход',n:'Спрей-кондиционер безводный',p:[1404.4,1263.96,1137.56,870.24],cons:'liq'},{sub:'Уход',n:'Спрей-кондиционер двухфазный',p:[612.06,550.85,495.77,379.26],cons:'liq'},{sub:'Уход',n:'Спрей нейтрализатор запаха',p:[157.7,141.93,127.74,97.72],cons:'liq'},{sub:'Уход',n:'Пенка для лап с пантенолом',p:[184.31,165.88,149.29,114.21],cons:'liq'},{sub:'Чистота',n:'Гель для стирки вещей для животных',p:[322.27,290.04,261.04,199.69],cons:'liq'},{sub:'Чистота',n:'Средство для уборки с нейтрализатором запаха',p:[163.25,146.93,132.23,101.16],cons:'liq'}]};
+const CAT_META = {cosm:{icon:'🌿',name:'Косметика'},kids:{icon:'🍼',name:'Для детей'},home:{icon:'🕯️',name:'Для дома'},chem:{icon:'🧺',name:'Бытхимия'},pets:{icon:'🐾',name:'Для животных'}};
+let curGrp='cosm',curSub='',curProd=null,tare='us',lbl='auto',recipeType='standard',packType='individual',tmChoice='none',designPkg='none';
+function getCatalog(){const cat=JSON.parse(JSON.stringify(CATALOG_DEF));try{const embCat=EMBEDDED_SETTINGS&&EMBEDDED_SETTINGS.cat||{};const saved={...embCat,...JSON.parse(localStorage.getItem('stm_cat')||'{}')};Object.keys(cat).forEach(grp=>{if(saved[grp])cat[grp].forEach((prod,i)=>{if(saved[grp][i]){prod.p=saved[grp][i].p||prod.p;if(saved[grp][i].hidden!==undefined)prod.hidden=saved[grp][i].hidden;}});});}catch(e){}try{const embCustom=EMBEDDED_SETTINGS&&EMBEDDED_SETTINGS.catCustom||{};const custom={...embCustom,...JSON.parse(localStorage.getItem('stm_cat_custom')||'{}')};Object.keys(cat).forEach(grp=>{if(custom[grp]&&Array.isArray(custom[grp])){cat[grp].push(...custom[grp]);}});}catch(e){}return cat;}
+function renderCats(){const cat=getCatalog();document.getElementById('catGrid').innerHTML=Object.keys(CAT_META).map(grp=>{const m=CAT_META[grp];const cnt=cat[grp].filter(p=>!p.hidden).length;return `<div class="cat-card${grp===curGrp?' active':''}" id="cc-${grp}" onclick="pickGrp('${grp}')"><span class="ic">${m.icon}</span><div class="nm">${m.name}</div><div class="ct">${cnt} продуктов</div></div>`;}).join('');renderSubs();}
+function pickGrp(grp){curGrp=grp;curSub='';curProd=null;document.querySelectorAll('.cat-card').forEach(c=>c.classList.remove('active'));document.getElementById('cc-'+grp).classList.add('active');renderSubs();liveCalc();}
+function renderSubs(){const cat=getCatalog();const subs=[...new Set(cat[curGrp].filter(p=>!p.hidden).map(p=>p.sub))];curSub='';document.getElementById('subpills').innerHTML='<div class="subpill active" onclick="pickSub(\'\')" style="font-weight:700;">Все товары</div>'+subs.map(s=>`<div class="subpill${s===curSub?' active':''}" onclick="pickSub('${s}')">${s}</div>`).join('');renderProds();}
+function pickSub(s){curSub=s;document.querySelectorAll('.subpill').forEach(p=>p.classList.remove('active'));event.target.classList.add('active');renderProds();}
+function renderProds(){const cat=getCatalog();const prods=curSub===''?cat[curGrp].filter(p=>!p.hidden):cat[curGrp].filter(p=>!p.hidden&&p.sub===curSub);const sel=document.getElementById('prodSel');sel.innerHTML='<option value="">— выберите продукт —</option>'+prods.map(p=>{const idx=cat[curGrp].indexOf(p);return `<option value="${idx}">${p.n}</option>`;}).join('');curProd=null;liveCalc();}
+function onProd(){const v=document.getElementById('prodSel').value;if(v===''){curProd=null;liveCalc();return;}curProd=getCatalog()[curGrp][+v];const volWrapper=document.querySelector('.cfg .fld:has(#volSel)');if(volWrapper){volWrapper.style.display=curProd.direct?'none':'block';}liveCalc();}
+function setTare(v){tare=v;['us','cl'].forEach(x=>document.getElementById('tare-'+x).classList.toggle('on',x===v));liveCalc();}
+function setLbl(v){lbl=v;['auto','m1','m2'].forEach(x=>document.getElementById('lbl-'+x).classList.toggle('on',x===v));liveCalc();}
+function setRecipe(v){recipeType=v;['standard','custom'].forEach(x=>document.getElementById('recipe-'+x).classList.toggle('on',x===v));liveCalc();}
+function setPackage(v){packType=v;['individual','group'].forEach(x=>document.getElementById('package-'+x).classList.toggle('on',x===v));liveCalc();}
+function setTrademark(v){tmChoice=v;['none','reg','self'].forEach(x=>document.getElementById('trademark-'+x).classList.toggle('on',x===v));liveCalc();}
+function setDesign(v){designPkg=v;['none','basic','full'].forEach(x=>document.getElementById('design-'+x).classList.toggle('on',x===v));liveCalc();}
+function prodPrice(qty){if(!curProd)return 0;const[a,b,c,d]=curProd.p;return qty>=5000?d:qty>=2000?c:qty>=1000?b:a;}
+function consistency(){return curProd?curProd.cons||'liq':'liq';}
+function delivPU(city,qty,vol){const s=getSvc();const rates={moscow:s.dmsc,kursk:s.dkur,mkad:s.dmkd,other:0};const rate=rates[city]||0;if(!rate)return 0;const upp=Math.max(40,Math.round(500/Math.max(vol,0.1)));const pals=Math.max(1,Math.ceil(qty/upp));const trucks=Math.ceil(pals/16);return(trucks*rate)/qty;}
+function liveCalc(){if(!curProd){document.getElementById('priceSticker').classList.remove('show');document.getElementById('result').classList.remove('show');document.getElementById('emailSec').style.display='none';return;}const qty=Math.max(500,parseInt(document.getElementById('qtyInp').value)||1000);const vol=parseFloat(document.getElementById('volSel').value)||0.3;const city=document.getElementById('citySel').value;const s=getSvc();const isDirect=!!curProd.direct;const rawPrice=prodPrice(qty);const prodCost=isDirect?rawPrice:rawPrice*vol;const cons=consistency();const packCost=cons==='crm'?s.crm:cons==='dry'?s.dry:s.liq;let tareCost=0;if(tare==='us'&&!isDirect){tareCost=s.tarePrices[vol]||0;}const lblCost=lbl==='auto'?s.la:lbl==='m1'?s.lm1:s.lm2;const delPU=delivPU(city,qty,vol);const docTypeMap={cosm:s.docTypeCosm,kids:s.docTypeKids,home:s.docTypeHome,chem:s.docTypeChem,pets:s.docTypePets};const docType=docTypeMap[curGrp]||'decl';const packCostRow=packType==='individual'?s.packIndividual:s.packGroup;const prodFormula=isDirect?`${rawPrice.toFixed(2)} ₽/ед × ${qty.toLocaleString('ru')} шт`:`${rawPrice.toFixed(2)} ₽/л × ${vol} л × ${qty.toLocaleString('ru')} шт`;const rows=[{nm:'Продукт (рецептура + сырьё)',nt:`${curProd.n}${isDirect?` · ${qty.toLocaleString('ru')} шт.`:` · ${vol*1000} мл · ${qty.toLocaleString('ru')} шт.`}<br><span style="font-size:12px;color:#999;font-weight:400">${prodFormula}</span>`,val:prodCost},{nm:'Фасовка и укупорка',nt:`Тип: ${cons==='crm'?'кремовая':cons==='dry'?'сухая':'жидкая'}`,val:packCost},{nm:tare==='us'&&!isDirect?'Тара (флакон + крышка) — Предоставляет поставщик':'Тара',nt:tare==='us'&&!isDirect?`${vol} л.`:'Не входит в расчёт (прямая цена продукта)',val:tareCost,zero:tareCost===0},{nm:'Этикетирование',nt:lbl==='auto'?'Машинная (1 эт.)':lbl==='m1'?'Ручная (1 эт.)':'Ручная (2 эт.)',val:lblCost},{nm:'Маркировка (дата, номер партии)',nt:'Нанесение на каждую единицу',val:s.mark},{nm:'Честный знак — ввод в оборот',nt:'Через аккаунт производителя',val:s.chz},{nm:'Маркировка ЧЗ',nt:'Нанесение кода на упаковку',val:s.chzMark},...(docType==='sgr'?[{nm:'СГР (Свидетельство о государственной регистрации)',nt:`<span style="font-size:12px;color:#999;font-weight:400">${s.sgr.toLocaleString('ru')} ₽ ÷ ${qty.toLocaleString('ru')} шт</span>`,val:s.sgr/qty}]:[{nm:'Декларация соответствия',nt:`<span style="font-size:12px;color:#999;font-weight:400">${s.decl.toLocaleString('ru')} ₽ ÷ ${qty.toLocaleString('ru')} шт</span>`,val:s.decl/qty}]),{nm:'GTIN — штрих-код ГС1',nt:`<span style="font-size:12px;color:#999;font-weight:400">${s.gtin.toLocaleString('ru')} ₽ ÷ ${qty.toLocaleString('ru')} шт</span>`,val:s.gtin/qty},...(tmChoice==='reg'?[{nm:'Регистрация товарного знака',nt:`<span style="font-size:12px;color:#999;font-weight:400">${s.tmReg.toLocaleString('ru')} ₽ ÷ ${qty.toLocaleString('ru')} шт</span>`,val:s.tmReg/qty}]:[]),{nm:packType==='individual'?'Упаковка индивидуальная (маркетплейсы)':'Упаковка групповая (без доп.упаковки)',nt:packType==='individual'?'Защитная пленка, короб, маркировка':'Гофрокороб, без индивидуальной упаковки',val:packCostRow},{nm:'Укладка в транспортные короба',nt:'Включает стоимость тарного короба',val:s.box+s.bsel},{nm:'Паллетирование + целлофанирование',nt:`${Math.max(1,Math.ceil(qty/Math.max(40,Math.round(500/Math.max(vol,0.1)))))} пал.`,val:s.pal},{nm:'Погрузо-разгрузочные работы',nt:'Отгрузка с производства',val:s.load},{nm:city==='other'?'Доставка — по запросу':'Доставка',nt:city==='other'?'Рассчитывается индивидуально':`${({moscow:'Москва - за МКАД',kursk:'Курск - Ozon/WB',mkad:'Москва - внутри МКАД'}[city])||''} · стоимость рейса ÷ ${qty.toLocaleString('ru')} шт.`,val:city==='other'?0:delPU,zero:city==='other'},...(recipeType==='custom'?[{nm:'Индивидуальная разработка рецептуры',nt:`<span style="font-size:12px;color:#999;font-weight:400">${s.devCost.toLocaleString('ru')} ₽ ÷ ${qty.toLocaleString('ru')} шт</span>`,val:s.devCost/qty}]:[]),...(designPkg!=='none'?[{nm:'Дизайн упаковки',nt:`${designPkg==='basic'?'Базовый пакет':'Полный пакет'} · разработка дизайна и подготовка макетов<br><span style="font-size:12px;color:#999;font-weight:400">${(designPkg==='basic'?s.designBasic:s.designFull).toLocaleString('ru')} ₽ ÷ ${qty.toLocaleString('ru')} шт</span>`,val:(designPkg==='basic'?s.designBasic:s.designFull)/qty}]:[])];
+const unit=rows.filter(r=>!r.zero).reduce((s,r)=>s+r.val,0);const grand=unit*qty;document.getElementById('rName').textContent=curProd.n;document.getElementById('rMeta').textContent=`${CAT_META[curGrp].name} · ${curSub}${isDirect?'':' · '+vol*1000+' мл'} · ${qty.toLocaleString('ru')} шт.`;document.getElementById('rUnit').textContent=unit.toFixed(2)+' ₽';document.getElementById('rTotal').textContent=`Итого за весь заказ: ${grand.toLocaleString('ru',{maximumFractionDigits:0})} ₽`;const tbody=document.getElementById('rRows');const t=getTxts();tbody.innerHTML=rows.map(r=>`<tr class="${r.zero?'zero-row':''}"><td>${r.nm}<span class="rn">${r.nt||''}</span></td><td>${r.zero?'—':r.val.toFixed(2)+' ₽'}</td></tr>`).join('')+`<tr class="total-row"><td><strong>${t.col1||'Стоимость единицы'}</strong></td><td><strong>${unit.toFixed(2)} ₽</strong></td></tr><tr class="grand-row"><td><strong>Итого за заказ (${qty.toLocaleString('ru')} шт.)</strong></td><td><strong>${grand.toLocaleString('ru',{maximumFractionDigits:0})} ₽</strong></td></tr>`;document.getElementById('resultDisclaimer').innerHTML='Данный расчёт носит информационный и ориентировочный характер. Предложение не является публичной офертой. Точную стоимость и условия изготовления уточняйте у менеджеров компании.';document.getElementById('result').classList.add('show');showEmailForm();const sticker=document.getElementById('priceSticker');const fmtUnit=unit.toLocaleString('ru',{minimumFractionDigits:2,maximumFractionDigits:2});const fmtGrand=grand.toLocaleString('ru',{maximumFractionDigits:0});document.getElementById('psName').textContent=curProd.n;document.getElementById('psUnit').innerHTML=fmtUnit+'<span> ₽</span>';document.getElementById('psQty').textContent='Количество: '+qty.toLocaleString('ru')+' шт';document.getElementById('psTotal').textContent=fmtGrand+' ₽';sticker.classList.add('show');}
+function openAdmin(){document.getElementById('aOv').classList.add('open');document.getElementById('pwdScr').style.display='block';document.getElementById('admCont').style.display='none';document.getElementById('pwdInp').value='';document.getElementById('pwdErr').style.display='none';}
+function chkPwd(){if(document.getElementById('pwdInp').value===ADMIN_PWD){document.getElementById('pwdScr').style.display='none';document.getElementById('admCont').style.display='block';hasUnsavedChanges=false;loadSvc();loadEmailSettings();loadTxtFields();loadAllProdTables();loadGhToken();}else{document.getElementById('pwdErr').style.display='block';}}
+let hasUnsavedChanges=false;
+function markUnsaved(){hasUnsavedChanges=true;}
+function closeAdmin(){
+  if(hasUnsavedChanges){
+    if(!confirm('У вас есть несохраненные изменения. Вы уверены, что хотите закрыть без сохранения?')){
+      return;
+    }
+  }
+  document.getElementById('aOv').classList.remove('open');
+  hasUnsavedChanges=false;
+}
+function loadGhToken(){const token=getGhToken();document.getElementById('gh_token_input').value=token;if(token)document.getElementById('gh_token_input').placeholder='••••••••••••••••••••••••••••••••••••••';}
+function admTab(t){const tabs=['svc','email','txt','help','cosm','kids','home','chem','pets','pub'];document.querySelectorAll('.adm-tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===t));document.querySelectorAll('.adm-panel').forEach(p=>p.classList.remove('active'));document.getElementById('ap-'+t).classList.add('active');}
+const SVC_MAP={liq:'s_liq',crm:'s_crm',dry:'s_dry',mark:'s_mark',la:'s_la',lm1:'s_lm1',lm2:'s_lm2',chz:'s_chz',chzMark:'s_chz_mark',decl:'s_decl',sgr:'s_sgr',gtin:'s_gtin',box:'s_box',bsel:'s_bsel',pal:'s_pal',load:'s_load',dmsc:'s_dmsc',dkur:'s_dkur',dmkd:'s_dmkd',devCost:'s_dev_cost',packIndividual:'s_pack_individual',packGroup:'s_pack_group',designBasic:'s_design_basic',designFull:'s_design_full',docTypeCosm:'s_doctype_cosm',docTypeKids:'s_doctype_kids',docTypeHome:'s_doctype_home',docTypeChem:'s_doctype_chem',docTypePets:'s_doctype_pets'};
+function renderDocTypes(){const s=getSvc();const docKeyMap={'s_doctype_cosm':'docTypeCosm','s_doctype_kids':'docTypeKids','s_doctype_home':'docTypeHome','s_doctype_chem':'docTypeChem','s_doctype_pets':'docTypePets'};Object.entries(docKeyMap).forEach(([id,key])=>{const sel=document.getElementById(id);if(sel){sel.innerHTML=`<option value="decl">ДС - Декларация соответствия (${s.decl.toLocaleString('ru')} ₽)</option><option value="sgr">СГР - Свидетельство о регистрации (${s.sgr.toLocaleString('ru')} ₽)</option>`;sel.value=s[key];}});}
+function renderTarePrices(){const s=getSvc();const tbody=document.getElementById('tarePricesBody');tbody.innerHTML=Object.entries(s.tarePrices).sort((a,b)=>parseFloat(a[0])-parseFloat(b[0])).map(([vol,price])=>`<tr><td style="padding:10px 8px;border-bottom:1px solid var(--g1)">${vol} л</td><td style="padding:10px 8px;border-bottom:1px solid var(--g1)"><input type="number" value="${price}" step="0.1" style="width:100%;padding:6px 8px;border:1px solid var(--g2);border-radius:var(--r-xs);font-size:13px" onchange="updateTarePrice('${vol}',this.value)"></td><td style="padding:10px 8px;text-align:center;border-bottom:1px solid var(--g1)"><button onclick="removeTarePrice('${vol}')" style="background:#fee;color:var(--red);border:none;border-radius:var(--r-xs);padding:4px 8px;cursor:pointer;font-size:11px">✕</button></td></tr>`).join('');}
+function addTarePrice(){const s=getSvc();const newVol=prompt('Введите объем тары (в литрах, например 0.25)');if(!newVol)return;const vol=parseFloat(newVol);if(isNaN(vol)||vol<=0){alert('Некорректный объем');return;}if(s.tarePrices[vol]){alert('Этот объем уже есть');return;}const price=parseFloat(prompt('Введите цену тары (в рублях)'))||0;s.tarePrices[vol]=price;const saved=JSON.parse(localStorage.getItem('stm_svc')||'{}');saved.tarePrices=s.tarePrices;localStorage.setItem('stm_svc',JSON.stringify(saved));markUnsaved();renderTarePrices();liveCalc();}
+function updateTarePrice(vol,price){const s=getSvc();s.tarePrices[vol]=parseFloat(price)||0;const saved=JSON.parse(localStorage.getItem('stm_svc')||'{}');saved.tarePrices=s.tarePrices;localStorage.setItem('stm_svc',JSON.stringify(saved));markUnsaved();liveCalc();}
+function removeTarePrice(vol){if(confirm('Удалить этот объем тары?')){const s=getSvc();delete s.tarePrices[vol];const saved=JSON.parse(localStorage.getItem('stm_svc')||'{}');saved.tarePrices=s.tarePrices;localStorage.setItem('stm_svc',JSON.stringify(saved));markUnsaved();renderTarePrices();liveCalc();}}
+function loadSvc(){const s=getSvc();Object.entries(SVC_MAP).forEach(([k,id])=>{const el=document.getElementById(id);if(el){el.value=s[k];el.addEventListener('input',markUnsaved);}});renderTarePrices();renderDocTypes();}
+function saveSvc(){const saved={};Object.entries(SVC_MAP).forEach(([k,id])=>{const el=document.getElementById(id);if(el){saved[k]=k.includes('docType')?el.value:parseFloat(el.value)||0;}});const s=getSvc();saved.tarePrices=s.tarePrices;localStorage.setItem('stm_svc',JSON.stringify(saved));flash('svc-ok');hasUnsavedChanges=false;renderDocTypes();liveCalc();autoPublish();}
+const TXT_MAP={badge:'te-badge',h1:'te-h1',p:'te-p',s1h:'te-s1h',s1s:'te-s1s',type:'te-type',s2h:'te-s2h',s2s:'te-s2s',notice:'te-notice','lbl-vol':'te-lbl-vol','lbl-qty':'te-lbl-qty','lbl-city':'te-lbl-city','tare-h':'te-tare-h','tare-hint':'te-tare-hint','tare-info':'te-tare-info','tare-us':'te-tare-us','tare-cl':'te-tare-cl','lbl-h':'te-lbl-h','lbl-hint':'te-lbl-hint','lbl-info':'te-lbl-info','lbl-auto':'te-lbl-auto','lbl-m1':'te-lbl-m1','lbl-m2':'te-lbl-m2','recipe-h':'te-recipe-h','recipe-hint':'te-recipe-hint','recipe-info':'te-recipe-info','recipe-standard':'te-recipe-standard','recipe-custom':'te-recipe-custom','package-h':'te-package-h','package-hint':'te-package-hint','package-info':'te-package-info','package-individual':'te-package-individual','package-group':'te-package-group','design-h':'te-design-h','design-hint':'te-design-hint','design-info':'te-design-info','design-none':'te-design-none','design-basic':'te-design-basic','design-full':'te-design-full','email-h':'te-email-h','email-hint':'te-email-hint','email-name-lbl':'te-email-name-lbl','email-phone-lbl':'te-email-phone-lbl','email-email-lbl':'te-email-email-lbl','email-consent':'te-email-consent',col1:'te-col1',col2:'te-col2'};
+function loadTxtFields(){const t=getTxts();Object.entries(TXT_MAP).forEach(([k,id])=>{const el=document.getElementById(id);if(el){el.value=t[k]||'';el.addEventListener('input',markUnsaved);}})}
+function saveTxts(){const saved={};Object.entries(TXT_MAP).forEach(([k,id])=>{const el=document.getElementById(id);if(el)saved[k]=el.value;});localStorage.setItem('stm_txt',JSON.stringify(saved));applyTxts();flash('txt-ok');hasUnsavedChanges=false;autoPublish();}
+function loadAllProdTables(){['cosm','kids','home','chem','pets'].forEach(g=>loadProdTable(g));}
+function loadProdTable(grp){const cat=getCatalog();document.getElementById('pb-'+grp).innerHTML=cat[grp].map((prod,i)=>{const isCustom=prod.id&&prod.id.startsWith('custom_');const lastCell=isCustom?`<td><button class="del-btn" onclick="deleteCustomProduct('${grp}','${prod.id}')">✕ Удалить</button></td>`:`<td><label class="sw"><input type="checkbox" id="ph-${grp}-${i}" ${prod.hidden?'':'checked'} onchange="toggleProd('${grp}',${i});markUnsaved();"><span class="sw-slider"></span></label></td>`;return `<tr id="ptr-${grp}-${i}" class="${prod.hidden?'hidden-prod':''}"><td><div class="prod-name">${prod.n}</div><small style="color:#bbb">${prod.sub}${prod.direct?' · прямая цена/ед':' · ₽/л'}</small></td><td><input class="price-inp" type="number" step="0.01" id="pr-${grp}-${i}-0" value="${prod.p[0]}" oninput="markUnsaved()"></td><td><input class="price-inp" type="number" step="0.01" id="pr-${grp}-${i}-1" value="${prod.p[1]}" oninput="markUnsaved()"></td><td><input class="price-inp" type="number" step="0.01" id="pr-${grp}-${i}-2" value="${prod.p[2]}" oninput="markUnsaved()"></td><td><input class="price-inp" type="number" step="0.01" id="pr-${grp}-${i}-3" value="${prod.p[3]}" oninput="markUnsaved()"></td>${lastCell}</tr>`;}).join('');}
+function toggleProd(grp,i){const checked=document.getElementById('ph-'+grp+'-'+i).checked;document.getElementById('ptr-'+grp+'-'+i).classList.toggle('hidden-prod',!checked);}
+function saveCat(grp){const cat=getCatalog();const saved=JSON.parse(localStorage.getItem('stm_cat')||'{}');if(!saved[grp])saved[grp]={};cat[grp].forEach((prod,i)=>{const p=[0,1,2,3].map(j=>{const el=document.getElementById('pr-'+grp+'-'+i+'-'+j);return el?parseFloat(el.value)||prod.p[j]:prod.p[j];});const hel=document.getElementById('ph-'+grp+'-'+i);saved[grp][i]={p,hidden:hel?!hel.checked:false};});localStorage.setItem('stm_cat',JSON.stringify(saved));flash(grp+'-ok');hasUnsavedChanges=false;renderCats();autoPublish();}
+function filterProd(grp,q){const lq=q.toLowerCase();document.querySelectorAll(`#pb-${grp} tr`).forEach(row=>{const nm=row.querySelector('.prod-name');if(!nm)return;row.style.display=nm.textContent.toLowerCase().includes(lq)?'':'none';});}
+function flash(id){const el=document.getElementById(id);if(!el)return;el.style.display='block';setTimeout(()=>el.style.display='none',3000);}
+
+/* CUSTOM PRODUCTS */
+function getCustomCatalog(){try{return JSON.parse(localStorage.getItem('stm_cat_custom')||'{}');}catch(e){return{cosm:[],kids:[],home:[],chem:[],pets:[]};}}
+function saveCustomCatalog(custom){localStorage.setItem('stm_cat_custom',JSON.stringify(custom));}
+function toggleAddForm(grp){const form=document.getElementById('apf-'+grp);if(form){form.classList.toggle('open');if(form.classList.contains('open')){document.getElementById('apf-'+grp+'-sub').focus();}}}
+function submitAddProd(grp){const sub=document.getElementById('apf-'+grp+'-sub').value.trim();const name=document.getElementById('apf-'+grp+'-name').value.trim();const direct=document.getElementById('apf-'+grp+'-direct').value==='true';const cons=document.getElementById('apf-'+grp+'-cons').value;const p0=parseFloat(document.getElementById('apf-'+grp+'-p0').value)||0;const p1=parseFloat(document.getElementById('apf-'+grp+'-p1').value)||0;const p2=parseFloat(document.getElementById('apf-'+grp+'-p2').value)||0;const p3=parseFloat(document.getElementById('apf-'+grp+'-p3').value)||0;if(!sub||!name){alert('Заполните подкатегорию и название товара');return;}if(!p0||!p1||!p2||!p3){alert('Заполните все цены');return;}const custom=getCustomCatalog();if(!custom[grp])custom[grp]=[];const newProd={id:'custom_'+Date.now(),sub,n:name,p:[p0,p1,p2,p3],cons,direct,hidden:false};custom[grp].push(newProd);saveCustomCatalog(custom);document.getElementById('apf-'+grp+'-sub').value='';document.getElementById('apf-'+grp+'-name').value='';document.getElementById('apf-'+grp+'-direct').value='false';document.getElementById('apf-'+grp+'-cons').value='liq';document.getElementById('apf-'+grp+'-p0').value='';document.getElementById('apf-'+grp+'-p1').value='';document.getElementById('apf-'+grp+'-p2').value='';document.getElementById('apf-'+grp+'-p3').value='';toggleAddForm(grp);markUnsaved();renderCats();loadProdTable(grp);}
+function deleteCustomProduct(grp,id){if(!confirm('Удалить этот товар?'))return;const custom=getCustomCatalog();if(custom[grp]){custom[grp]=custom[grp].filter(p=>p.id!==id);saveCustomCatalog(custom);markUnsaved();renderCats();loadProdTable(grp);}}
+
+/* GITHUB AUTO-PUBLISH */
+function getGhToken(){return localStorage.getItem('gh_token')||'';}
+function setGhToken(token){if(token){localStorage.setItem('gh_token',token);}else{localStorage.removeItem('gh_token');}}
+async function testGhToken(token){if(!token)return false;try{const res=await fetch('https://api.github.com/user',{headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}});if(res.ok){setGhToken(token);flash('pub-test-ok');return true;}else{flash('pub-test-err');return false;}}catch(e){flash('pub-test-err');return false;}}
+async function autoPublish(){const token=getGhToken();if(!token)return;const settings={svc:JSON.parse(localStorage.getItem('stm_svc')||'{}'),txt:JSON.parse(localStorage.getItem('stm_txt')||'{}'),email:JSON.parse(localStorage.getItem('stm_email')||'{}'),cat:JSON.parse(localStorage.getItem('stm_cat')||'{}'),catCustom:JSON.parse(localStorage.getItem('stm_cat_custom')||'{}')};try{const apiUrl=`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`;const headers={'Authorization':`token ${token}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'};const getRes=await fetch(apiUrl,{headers});if(!getRes.ok){console.warn('Ошибка получения файла с GitHub');return;}const data=await getRes.json();if(!data.content||!data.sha){console.warn('Нет данных файла на GitHub');return;}const raw=atob(data.content);const newLine=`const EMBEDDED_SETTINGS = ${JSON.stringify(settings)};`;const lines=raw.split('\n');const idx=lines.findIndex(l=>l.trim().startsWith('const EMBEDDED_SETTINGS'));if(idx===-1){console.warn('EMBEDDED_SETTINGS не найден');return;}lines[idx]=newLine;const updated=lines.join('\n');const newContent=btoa(unescape(encodeURIComponent(updated)));const putRes=await fetch(apiUrl,{method:'PUT',headers,body:JSON.stringify({message:'Обновление настроек калькулятора',content:newContent,sha:data.sha,branch:GH_BRANCH})});if(putRes.ok){console.log('✓ Опубликовано на GitHub Pages (~30 сек)');}else{console.warn('Ошибка публикации на GitHub');};}catch(e){console.warn('Ошибка автопубликации:',e);}}
+
+/* EMAIL FUNCTIONALITY */
+const EMAIL_DEF={managerEmail:'',emailMethod:'formspree',emailKey:'',clientText:'Спасибо за доверие. Наша команда свяжется с вами в течение 24 часов.'};
+function getEmailSettings(){try{const emb=EMBEDDED_SETTINGS&&EMBEDDED_SETTINGS.email||{};return{...EMAIL_DEF,...emb,...JSON.parse(localStorage.getItem('stm_email')||'{}')};}catch(e){return{...EMAIL_DEF};}}
+function loadEmailSettings(){const e=getEmailSettings();const fields=['s_manager_email','s_email_method','s_email_key','s_email_client_text'];document.getElementById('s_manager_email').value=e.managerEmail||'';document.getElementById('s_email_method').value=e.emailMethod||'formspree';document.getElementById('s_email_key').value=e.emailKey||'';document.getElementById('s_email_client_text').value=e.clientText||EMAIL_DEF.clientText;fields.forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',markUnsaved);});}
+function saveEmailSettings(){const saved={managerEmail:document.getElementById('s_manager_email').value,emailMethod:document.getElementById('s_email_method').value,emailKey:document.getElementById('s_email_key').value,clientText:document.getElementById('s_email_client_text').value};localStorage.setItem('stm_email',JSON.stringify(saved));flash('email-ok');hasUnsavedChanges=false;autoPublish();}
+function showEmailForm(){if(curProd){document.getElementById('emailSec').style.display='block';document.getElementById('emailName').value='';document.getElementById('emailPhone').value='';document.getElementById('emailEmail').value='';document.getElementById('emailConsent').checked=false;document.getElementById('emailStatus').textContent='';document.getElementById('emailStatus').className='';document.getElementById('emailSubmitBtn').disabled=false;}}
+function validateEmail(email){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);}
+function showInfo(type){
+  const t=getTxts();
+  const modal=document.getElementById('infoModal');
+  let title='Справка',text='';
+  if(type==='tare'){
+    title='Тара и укупорка';
+    text=t['tare-info']||'Тара - это флакон, туба, канистра и пр. Укупорка - это дозатор, крышка, флип-топ, пробка и пр. Вы можете самостоятельно приобрести эти комплектующие и предоставить их нам для фасовки вашего продукта.';
+  }else if(type==='lbl'){
+    title='Способ этикетирования';
+    text=t['lbl-info']||'Машинная этикетровка происходит на циллиндрических флаконах (у которых круглое дно) в автоматическом режиме. Ручная этикетировка происходит на фигурных флаконах, таре со сложной геометрией, плоской таре (например, канистры) или упаковке с необычной формой.';
+  }else if(type==='recipe'){
+    title='Рецептура';
+    text=t['recipe-info']||'В Стандартном каталоге рецептур есть разные варианты продуктов, отличающихся по качеству, концентрации активных компонентов, и себестоимости. Стандартные рецептуры не передаются заказчику и являются интеллектуальной собственностью поставщика. При разработке индивидуальной рецептуры, Поставщик передает саму рецептуру и технологическую карту в собственность Покупателя и не использует ее в своей работе для других заказчиков.';
+  }else if(type==='package'){
+    title='Упаковка и маркировка';
+    text=t['package-info']||'Индивидуальная упаковка для маркетплейсов включает в себя, помимо упаковки самого товара, защитную пленку, индивидуальный короб, маркировку для идентификации продукта на складе маркетплейса. Групповая упаковка включает в себя дополнительный гофрокороб, в который складываются несколько товаров без индивидуальной упаковки (для дальнейшей работы с ними на складах, фулфилментах или розничных точках продаж).';
+  }else if(type==='design'){
+    title='Дизайн упаковки';
+    text=t['design-info']||'Базовый пакет включает разработку основного дизайна упаковки. Полный пакет включает разработку дизайна, подготовку макетов к печати и согласование с типографией.';
+  }
+  document.getElementById('infoModalTitle').textContent=title;
+  document.getElementById('infoModalText').innerHTML=text;
+  modal.classList.add('open');
+}
+function closeInfo(){
+  document.getElementById('infoModal').classList.remove('open');
+}
+document.getElementById('infoModal')?.addEventListener('click',function(e){
+  if(e.target===this)closeInfo();
+});
+function normalizePhone(phone){
+  return phone.replace(/\D/g,'');
+}
+function submitCalculation(){
+  const name=document.getElementById('emailName').value.trim();
+  const phone=normalizePhone(document.getElementById('emailPhone').value.trim());
+  const email=document.getElementById('emailEmail').value.trim();
+  const consent=document.getElementById('emailConsent').checked;
+  const status=document.getElementById('emailStatus');
+
+  if(!name||!phone||!email){
+    status.className='error';
+    status.textContent='❌ Заполните все поля';
+    return;
+  }
+  if(!validateEmail(email)){
+    status.className='error';
+    status.textContent='❌ Проверьте корректность email';
+    return;
+  }
+  if(!consent){
+    status.className='error';
+    status.textContent='❌ Согласитесь с обработкой данных';
+    return;
+  }
+
+  document.getElementById('emailSubmitBtn').disabled=true;
+  status.className='';
+  status.textContent='⏳ Отправка...';
+
+  const qty=Math.max(500,parseInt(document.getElementById('qtyInp').value)||1000);
+  const vol=parseFloat(document.getElementById('volSel').value)||0.3;
+  const city=document.getElementById('citySel').value;
+  const isDirect=!!curProd.direct;
+  const unit=calculateUnit();
+  const grand=unit*qty;
+
+  const calcData={
+    productName:curProd.n,
+    category:CAT_META[curGrp].name,
+    subcategory:curSub,
+    volume:vol,
+    quantity:qty,
+    city:city,
+    tariff:tare,
+    labeling:lbl,
+    pricePerUnit:unit.toFixed(2),
+    totalPrice:grand.toLocaleString('ru',{maximumFractionDigits:0}),
+    clientName:name,
+    clientPhone:phone,
+    clientEmail:email,
+    timestamp:new Date().toLocaleString('ru-RU')
+  };
+
+  sendEmail(calcData);
+}
+
+function calculateUnit(){
+  if(!curProd)return 0;
+  const qty=parseInt(document.getElementById('qtyInp').value)||1000;
+  const vol=parseFloat(document.getElementById('volSel').value)||0.3;
+  const city=document.getElementById('citySel').value;
+  const s=getSvc();
+  const isDirect=!!curProd.direct;
+  const rawPrice=prodPrice(qty);
+  const prodCost=isDirect?rawPrice:rawPrice*vol;
+  const cons=curProd.cons||'liq';
+  const packCost=cons==='crm'?s.crm:cons==='dry'?s.dry:s.liq;
+  let tareCost=0;
+  if(tare==='us'&&!isDirect){tareCost=s.tarePrices[vol]||0;}
+  const lblCost=lbl==='auto'?s.la:lbl==='m1'?s.lm1:s.lm2;
+  const delPU=delivPU(city,qty,vol);
+  const docTypeMap={cosm:s.docTypeCosm,kids:s.docTypeKids,home:s.docTypeHome,chem:s.docTypeChem,pets:s.docTypePets};
+  const docType=docTypeMap[curGrp]||'decl';
+  const docCost=docType==='sgr'?(s.sgr/qty):(s.decl/qty);
+  const packCostUnit=packType==='individual'?s.packIndividual:s.packGroup;
+  const devCost=recipeType==='custom'?(s.devCost/qty):0;
+  const designCost=designPkg!=='none'?(designPkg==='basic'?s.designBasic:s.designFull)/qty:0;
+  const tmCost=tmChoice==='reg'?(s.tmReg/qty):0;
+  return prodCost+packCost+tareCost+lblCost+s.mark+s.chz+s.chzMark+docCost+(s.gtin/qty)+packCostUnit+(s.box+s.bsel)+s.pal+s.load+(city==='other'?0:delPU)+devCost+designCost+tmCost;
+}
+
+function sendEmail(calcData){
+  const settings=getEmailSettings();
+  const status=document.getElementById('emailStatus');
+
+  if(!settings.managerEmail||settings.emailMethod==='disabled'){
+    status.className='error';
+    status.textContent='❌ Email не настроен администратором';
+    document.getElementById('emailSubmitBtn').disabled=false;
+    return;
+  }
+
+  const emailContent={
+    to:calcData.clientEmail,
+    managerEmail:settings.managerEmail,
+    method:settings.emailMethod,
+    apiKey:settings.emailKey,
+    clientText:settings.clientText,
+    calcData:calcData
+  };
+
+  if(settings.emailMethod==='formspree'){
+    sendViaFormspree(emailContent);
+  }else if(settings.emailMethod==='emailjs'){
+    sendViaEmailJS(emailContent);
+  }else if(settings.emailMethod==='backend'){
+    sendViaBackend(emailContent);
+  }
+}
+
+function sendViaFormspree(emailContent){
+  const status=document.getElementById('emailStatus');
+  const formId = emailContent.apiKey.startsWith('https://') ? emailContent.apiKey.split('/').pop() : emailContent.apiKey;
+  const url = 'https://formspree.io/f/'+formId;
+
+  const formData = new FormData();
+  formData.append('email', emailContent.to);
+  formData.append('_cc', emailContent.managerEmail);
+  formData.append('name', emailContent.calcData.clientName);
+  formData.append('phone', emailContent.calcData.clientPhone);
+  formData.append('message', formatEmailMessage(emailContent.calcData, emailContent.clientText));
+  formData.append('_subject', 'Расчёт СТМ от ' + emailContent.calcData.clientName);
+
+  fetch(url, {
+    method: 'POST',
+    body: formData,
+    headers: {'Accept': 'application/json'}
+  })
+    .then(r => {
+      if(r.ok) return r.json();
+      return r.json().then(data => Promise.reject(data));
+    })
+    .then(data => {
+      status.className='success';
+      status.textContent='✓ Расчёт отправлен на вашу почту';
+      setTimeout(()=>{document.getElementById('emailSec').style.display='none';document.getElementById('emailSubmitBtn').disabled=false;},2000);
+    })
+    .catch(err => {
+      console.error('Formspree error:', err);
+      status.className='error';
+      status.textContent='❌ Ошибка отправки. Проверьте что Formspree форма подтверждена.';
+      document.getElementById('emailSubmitBtn').disabled=false;
+    });
+}
+
+function sendViaEmailJS(emailContent){
+  const status=document.getElementById('emailStatus');
+  if(typeof emailjs==='undefined'){
+    status.className='error';
+    status.textContent='❌ EmailJS не загружен';
+    document.getElementById('emailSubmitBtn').disabled=false;
+    return;
+  }
+
+  const params={
+    to_email:emailContent.to,
+    cc_email:emailContent.managerEmail,
+    client_name:emailContent.calcData.clientName,
+    client_phone:emailContent.calcData.clientPhone,
+    message:formatEmailMessage(emailContent.calcData,emailContent.clientText)
+  };
+
+  emailjs.send('service_id','template_id',params,emailContent.apiKey)
+    .then(()=>{
+      status.className='success';
+      status.textContent='✓ Расчёт отправлен на вашу почту';
+      setTimeout(()=>{document.getElementById('emailSec').style.display='none';document.getElementById('emailSubmitBtn').disabled=false;},2000);
+    })
+    .catch(()=>{
+      status.className='error';
+      status.textContent='❌ Ошибка отправки. Проверьте API ключ.';
+      document.getElementById('emailSubmitBtn').disabled=false;
+    });
+}
+
+function sendViaBackend(emailContent){
+  const status=document.getElementById('emailStatus');
+  fetch(emailContent.apiKey,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      clientEmail:emailContent.to,
+      managerEmail:emailContent.managerEmail,
+      clientName:emailContent.calcData.clientName,
+      clientPhone:emailContent.calcData.clientPhone,
+      message:formatEmailMessage(emailContent.calcData,emailContent.clientText)
+    })
+  })
+    .then(r=>r.ok?Promise.resolve():Promise.reject())
+    .then(()=>{
+      status.className='success';
+      status.textContent='✓ Расчёт отправлен на вашу почту';
+      setTimeout(()=>{document.getElementById('emailSec').style.display='none';document.getElementById('emailSubmitBtn').disabled=false;},2000);
+    })
+    .catch(()=>{
+      status.className='error';
+      status.textContent='❌ Ошибка отправки. Проверьте URL бэкенда.';
+      document.getElementById('emailSubmitBtn').disabled=false;
+    });
+}
+
+function formatEmailMessage(calc,clientText){
+  return `Добрый день, ${calc.clientName}!
+
+Ваш расчёт стоимости производства:
+
+📦 Продукт: ${calc.productName}
+📂 Категория: ${calc.category} → ${calc.subcategory}
+📏 Объём: ${calc.volume*1000} мл
+📊 Количество: ${calc.quantity.toLocaleString('ru')} шт.
+🚚 Город доставки: ${calc.city}
+
+💰 ИТОГОВАЯ СТОИМОСТЬ:
+• Стоимость за единицу: ${calc.pricePerUnit} ₽
+• Всего за заказ: ${calc.totalPrice} ₽
+
+Дата расчёта: ${calc.timestamp}
+
+${clientText}
+
+Ваши контакты:
+📞 Телефон: ${calc.clientPhone}
+📧 Email: ${calc.clientEmail}
+
+С уважением,
+Команда СТМ`;
+}
+
+document.getElementById('aOv').addEventListener('click', function(e) {
+  // Не закрываем модаль при клике вне окна — только по явной кнопке закрытия
+});
+
+document.addEventListener('keydown', function(e) {
+  if(e.key === 'Escape' && document.getElementById('aOv').classList.contains('open')) {
+    closeAdmin();
+  }
+});
+
+applyTxts();
+renderCats();
+</script>
+
+<!-- INFO MODAL -->
+<div class="info-modal" id="infoModal">
+  <div class="info-modal-content">
+    <div class="info-modal-title" id="infoModalTitle">Справка</div>
+    <div class="info-modal-text" id="infoModalText"></div>
+    <button class="info-modal-close" onclick="closeInfo()">Закрыть</button>
+  </div>
+</div>
+
+</body>
+</html>
